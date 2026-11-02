@@ -5,10 +5,13 @@
  * Import this in any function that needs CORS support.
  */
 
-// Production origins - always allowed
+// Production origins - always allowed. Zeus Group hosts at zeusos.web.app
+// and its Firebase alias; os.zeustheagency.com is the custom domain (per
+// docs/CUSTOM_DOMAIN_SETUP.md) — add origins here when a new one goes live.
 const PRODUCTION_ORIGINS = [
-  'https://dawinos.web.app',
-  'https://dawinos.firebaseapp.com',
+  'https://zeusos.web.app',
+  'https://zeusos.firebaseapp.com',
+  'https://os.zeustheagency.com',
 ];
 
 // Development origins - only included when running in emulator or dev mode
