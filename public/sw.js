@@ -25,9 +25,20 @@
 // not a function` whenever a project's date field was present but not a
 // Firestore Timestamp. v81 ships the fix (utils/dates.ts `tsToDate`)
 // alongside this cache bump so returning users dump the broken bundle.
-const CACHE_NAME = 'zeusos-v1';
-const STATIC_CACHE = 'zeusos-static-v1';
-const DYNAMIC_CACHE = 'zeusos-dynamic-v1';
+//
+// Bumped to zeusos-v2 on 2026-11-10 — production hotfix. The Zeus fork
+// introduced `zeusos-v1` names and NEVER bumped them again. Every deploy
+// since the rebrand has shipped a new index.html whose cache was
+// PRECACHED by this SW's `install` handler (STATIC_ASSETS includes `/`
+// and `/index.html`), so returning users were pinned to the first
+// post-rebrand build. PR #185 (Zeus-UI re-skin) exposed it — users saw
+// the old dashboard despite a successful deploy. Paired with a
+// firebase.json rule making /sw.js no-cache so this bump actually
+// reaches browsers; future releases that need to force-purge the client
+// cache should bump these three constants.
+const CACHE_NAME = 'zeusos-v2';
+const STATIC_CACHE = 'zeusos-static-v2';
+const DYNAMIC_CACHE = 'zeusos-dynamic-v2';
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
