@@ -85,7 +85,8 @@ jobs:
   # ───────────────────────────────────────────────────────────────────────────
   e2e-lifecycle:
     name: Playwright — quote lifecycle (advisory)
-    runs-on: ubuntu-latest
+    # Playwright 1.57 does not support ubuntu-26.04 (what ubuntu-latest now is).
+    runs-on: ubuntu-24.04
     continue-on-error: true
     # Advisory job — but must not burn the full 6h GH max-duration if
     # the emulator stack or seed script wedges. A clean green run is
