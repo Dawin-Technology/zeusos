@@ -7,8 +7,6 @@
  * scales without re-measuring.
  */
 
-import React from 'react';
-
 export interface SparklineProps {
   /** Numeric data points. Needs at least 2 to draw a line. */
   points: number[];

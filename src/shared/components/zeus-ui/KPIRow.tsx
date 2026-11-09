@@ -4,7 +4,6 @@
  * The grid collapses to 2-up on tablet and 1-up on mobile via CSS.
  */
 
-import React from 'react';
 import { ArrowDown, ArrowUp, ChevronRight } from 'lucide-react';
 import { Sparkline } from './Sparkline';
 

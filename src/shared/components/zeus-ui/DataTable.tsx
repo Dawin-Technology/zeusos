@@ -112,7 +112,7 @@ function renderCell<Row extends object>(col: Column<Row>, row: Row) {
         typeof raw === 'number'
           ? raw
           : typeof raw === 'object' && raw !== null && 'pct' in (raw as Record<string, unknown>)
-            ? Number((raw as { pct: number }).pct)
+            ? Number((raw as unknown as { pct: number }).pct)
             : Number(raw);
       return <MiniBar pct={pct} />;
     }

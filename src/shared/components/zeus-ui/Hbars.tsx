@@ -7,8 +7,6 @@
  * the threshold position when supplied.
  */
 
-import React from 'react';
-
 export interface HbarRow {
   label: string;
   /** Current value (same units as `max`). */
