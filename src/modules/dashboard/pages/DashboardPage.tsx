@@ -2,25 +2,26 @@
  * DashboardPage — the Zeus Group landing surface (route `/`).
  *
  * Replaces the prior `/ → /strategy` redirect (which dropped users onto the
- * DawinOS Executive/OKR layout). Renders the refreshed "Commercial Gravity"
- * dashboard from the design package:
+ * DawinOS Executive/OKR layout). Rebuilt on the Zeus-UI (DawinOS "soft skin")
+ * primitives from the design handoff — ModuleHeader + KPIRow + SectionCard +
+ * DataTable + Hbars + Banner.
  *
  *   • PARENT (zeus-group): group-wide KPI strip + 5-brand portfolio roll-up
- *     + recent IWO activity + conflict-firewall watch + weekly-pulse stub.
+ *     + live IWO activity + conflict-firewall watch + weekly-pulse stub.
  *   • SUBSIDIARY: the brand's "today's work" — awaiting-acceptance + in-flight
  *     KPIs + inbox table scoped to the user's home brand.
  *
- * Data: wired to real Firestore. Parent reads the cross-brand active-IWO
- * collection-group via `subscribeActiveIwos` (parent-org-gated) + open master
- * jobs + conflict risks. Subsidiary reads its own brand via the delivery
+ * Data: unchanged. Parent still reads the cross-brand active-IWO collection-
+ * group via `subscribeActiveIwos` (parent-org-gated) + open master jobs +
+ * conflict risks. Subsidiary still reads its own brand via the delivery
  * inbox/active subscriptions (home-brand-scoped, rules-safe). Burn comes from
  * the pure `computeBurnMeter`. The weekly pulse has no aggregator yet and
  * renders a labelled placeholder rather than fabricated numbers.
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowUpRight, Shield, Inbox, Plus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowUpRight, Inbox, Plus, Shield } from 'lucide-react';
 import { useCurrentDawinUser } from '@/core/settings';
 import { useResilientSubscription } from '@/shared/hooks/useResilientSubscription';
 import { useAuth } from '@/shared/hooks';
@@ -38,8 +39,21 @@ import {
   subscribeConflictRisks,
   type ConflictExclusivityRiskEvent,
 } from '@/modules/conflict-firewall/services/conflict-firewall.service';
-import { KPI, BurnMeter, SectionH, Pill, type RagTone } from '@/shared/components/refresh';
 import { formatMinor } from '@/modules/account-management/utils/money';
+import { Button } from '@/core/components/ui/button';
+import {
+  Banner,
+  DataTable,
+  Hbars,
+  KPIRow,
+  ModuleHeader,
+  RagBadge,
+  SectionCard,
+  type Column,
+  type KPI as KpiSpec,
+  type RagTone,
+  type SubBrandId,
+} from '@/shared/components/zeus-ui';
 import { MyTasksCard } from '../components/MyTasksCard';
 
 // Brand metadata — mirrors the [data-brand] palette (UI Refresh v3: light
@@ -52,10 +66,16 @@ const BRAND_META: Record<string, { name: string; short: string; accent: string; 
   'odd-gorilla':     { name: 'Odd Gorilla',     short: 'OG', accent: '#ffb0b8', ink: '#0a1f4a' },
   'house-of-zeus':   { name: 'House of Zeus',   short: 'HZ', accent: '#c8ff3c', ink: '#0a1f4a' },
 };
-const DELIVERY_BRANDS = ['zeus-the-agency', 'zeus-digital', 'labyrinth', 'odd-gorilla', 'house-of-zeus'];
+const DELIVERY_BRANDS: SubBrandId[] = [
+  'zeus-the-agency',
+  'zeus-digital',
+  'labyrinth',
+  'odd-gorilla',
+  'house-of-zeus',
+];
 
 function brandMeta(id: string) {
-  return BRAND_META[id] ?? { name: id, short: id.slice(0, 2).toUpperCase(), accent: '#0a1f4a' };
+  return BRAND_META[id] ?? { name: id, short: id.slice(0, 2).toUpperCase(), accent: '#0a1f4a', ink: '#ffffff' };
 }
 
 type Sla = 'breach' | 'warn' | 'ok' | 'na';
@@ -97,15 +117,27 @@ export default function DashboardPage() {
   );
 
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  const firstName = user?.displayName?.split(' ')[0] || 'there';
 
-  if (isParent) return <ParentDashboard today={today} />;
-  return <SubsidiaryDashboard today={today} brandId={brandId} />;
+  if (isParent) return <ParentDashboard today={today} firstName={firstName} />;
+  return <SubsidiaryDashboard today={today} brandId={brandId} firstName={firstName} />;
 }
 
 // ---------------------------------------------------------------------------
 // PARENT — Commercial Gravity
 // ---------------------------------------------------------------------------
-function ParentDashboard({ today }: { today: string }) {
+
+/** Row shape for the parent "Recent IWO activity" DataTable. */
+interface IwoActivityRow {
+  id: string;
+  code: string;
+  brand: SubBrandId | string;
+  burnPct: number;
+  state: IWOState;
+}
+
+function ParentDashboard({ today, firstName }: { today: string; firstName: string }) {
+  const navigate = useNavigate();
   const [iwos, setIwos] = useState<InternalWorkOrder[]>([]);
   const [openMjCount, setOpenMjCount] = useState<number | null>(null);
   const [risks, setRisks] = useState<ConflictExclusivityRiskEvent[]>([]);
@@ -120,6 +152,7 @@ function ParentDashboard({ today }: { today: string }) {
   }, []);
 
   const breaches = iwos.filter((i) => slaRisk(i, nowMs) === 'breach').length;
+  const warns = iwos.filter((i) => slaRisk(i, nowMs) === 'warn').length;
 
   const portfolio = useMemo(
     () =>
@@ -133,155 +166,297 @@ function ParentDashboard({ today }: { today: string }) {
           return x === 'breach' || x === 'warn';
         }).length;
         const ccy = rows[0]?.currency ?? 'UGX';
-        return { id, activeIWOs: rows.length, burn, billable: budget ? formatMinor(budget, ccy) : '—', sla };
+        return {
+          id,
+          activeIWOs: rows.length,
+          burnPct: burn * 100,
+          billable: budget ? formatMinor(budget, ccy) : '—',
+          sla,
+        };
       }),
     [iwos, nowMs],
   );
 
+  const brandsEngaged = portfolio.filter((p) => p.activeIWOs > 0).length;
+
+  // 4-up KPI strip. We don't have time-series yet, so sparklines stay off here
+  // (the handoff treats them as optional). Trend is derived from the live state:
+  // breaches/warns drive "down", everything else "flat".
+  const kpis: KpiSpec[] = [
+    {
+      label: 'Open master jobs',
+      value: openMjCount ?? '—',
+      delta: openMjCount == null ? 'live…' : `across ${brandsEngaged} brand${brandsEngaged === 1 ? '' : 's'}`,
+      trend: 'flat',
+    },
+    {
+      label: 'In-flight IWOs',
+      value: iwos.length,
+      delta: `${warns} at SLA risk`,
+      trend: warns > 0 ? 'down' : 'flat',
+    },
+    {
+      label: 'Brands engaged',
+      value: brandsEngaged,
+      unit: ' / 5',
+      delta: brandsEngaged === 5 ? 'all brands active' : 'portfolio mix',
+      trend: 'flat',
+    },
+    {
+      label: 'SLA breaches',
+      value: breaches,
+      delta: breaches > 0 ? 'needs attention' : 'none today',
+      trend: breaches > 0 ? 'down' : 'flat',
+    },
+  ];
+
+  const activityRows: IwoActivityRow[] = iwos.slice(0, 7).map((i) => {
+    const burn = computeBurnMeter({ cumulativeMinor: i.cumulativeCostMinor, budgetMinor: i.budgetMinor });
+    return {
+      id: i.id,
+      code: i.code,
+      brand: i.subsidiaryOrgId,
+      burnPct: Math.round(burn.percentage),
+      state: i.state,
+    };
+  });
+
+  const activityColumns: Column<IwoActivityRow>[] = [
+    { key: 'code',    label: 'Code',  type: 'mono',  width: 160,
+      render: (v, r) => <Link to={`/delivery/iwo/${r.id}`} style={{ color: 'var(--fg-primary)' }} className="hover:underline">{String(v)}</Link>,
+    },
+    { key: 'brand',   label: 'Brand', type: 'brand', width: 140 },
+    { key: 'burnPct', label: 'Burn',  width: 90, align: 'right',
+      render: (v) => {
+        const n = Number(v);
+        const color = n >= 100 ? 'var(--rag-red)' : n >= 80 ? 'var(--rag-amber)' : 'var(--fg-primary)';
+        return <span style={{ color, fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{n}%</span>;
+      },
+    },
+    { key: 'state',   label: 'State', width: 180,
+      render: (v) => <RagBadge tone={stateTone(v as IWOState)} label={String(v).replace(/_/g, ' ').toLowerCase()} />,
+    },
+  ];
+
   return (
-    <div style={{ padding: 'var(--pad-page)' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, gap: 16 }}>
-        <div style={{ minWidth: 0 }}>
-          <div className="eyebrow" style={{ marginBottom: 6 }}>Zeus Group · {today}</div>
-          <h1 className="display">
-            Commercial gravity, <span className="zeus-underline">at a glance</span>
-          </h1>
-          <p style={{ marginTop: 12, color: 'var(--fg-secondary)', fontSize: 14, maxWidth: 520 }}>
-            Active engagements across the five brands. Pulled live from{' '}
-            <span className="mono" style={{ fontSize: 12 }}>master_jobs</span> +{' '}
-            <span className="mono" style={{ fontSize: 12 }}>internal_work_orders</span>.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flex: 'none' }}>
-          <Link to="/reports" className="btn btn-secondary"><ArrowUpRight size={13} /> Reports</Link>
-          <Link to="/traffic" className="btn btn-primary"><ArrowUpRight size={13} /> Open Traffic</Link>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
-        <KPI label="Open Master Jobs" value={openMjCount ?? '—'} accent="#0a1f4a" />
-        <KPI label="In-flight IWOs" value={iwos.length} accent="#e63946" />
-        <KPI label="Brands engaged" value={portfolio.filter((p) => p.activeIWOs > 0).length} accent="#2f9d5c" />
-        <KPI label="SLA breaches" value={breaches} deltaDir={breaches > 0 ? 'down' : 'flat'} accent="#e18425" />
-      </div>
-
-      <SectionH
-        eyebrow="Sub-brand roll-up"
-        title="Brand portfolio"
-        action={<Link to="/traffic" className="btn btn-ghost"><ArrowUpRight size={13} /> Open Traffic</Link>}
+    <>
+      <ModuleHeader
+        title={
+          <>
+            Good to see you, {firstName}. <span style={{ color: 'var(--fg-tertiary)', fontWeight: 400 }}>· {today}</span>
+          </>
+        }
+        subtitle={
+          <>
+            Commercial gravity across the five brands — live from{' '}
+            <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5 }}>master_jobs</code> +{' '}
+            <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5 }}>internal_work_orders</code>.
+          </>
+        }
+        actions={
+          <>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/reports"><ArrowUpRight className="h-3.5 w-3.5 mr-1" /> Reports</Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link to="/traffic"><ArrowUpRight className="h-3.5 w-3.5 mr-1" /> Open Traffic</Link>
+            </Button>
+          </>
+        }
       />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 12 }}>
-        {portfolio.map((p) => {
-          const b = brandMeta(p.id);
-          return (
-            <div key={p.id} className="card card-pad is-hoverable" style={{ position: 'relative', overflow: 'hidden', borderTop: `3px solid ${b.accent}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <span style={{ width: 22, height: 22, borderRadius: 5, background: b.accent, color: b.ink, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 10 }}>{b.short}</span>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{b.name}</div>
-                {isConflictIsolated(p.id as SubsidiaryId) && (
-                  <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 100, background: 'var(--rag-amber-soft)', color: 'var(--rag-amber)', marginLeft: 'auto', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Isolated</span>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-                <span className="tabular" style={{ fontSize: 22, fontWeight: 600 }}>{p.activeIWOs}</span>
-                <span style={{ fontSize: 11, color: 'var(--fg-tertiary)' }}>active IWOs</span>
-              </div>
-              <div className="tabular" style={{ fontSize: 11, color: 'var(--fg-tertiary)', marginBottom: 12 }}>
-                {p.billable} billable · {p.sla} SLA risk
-              </div>
-              <BurnMeter value={p.burn} label="Brand burn" />
-            </div>
-          );
-        })}
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginTop: 32 }}>
-        <div className="card">
-          <div className="card-head">
-            <h3>Recent IWO activity</h3>
-            <span className="sub">Live · in-flight</span>
-          </div>
-          <div style={{ overflow: 'hidden', borderTop: '1px solid var(--border-subtle)' }}>
-            <table className="tbl">
-              <thead>
-                <tr><th>Code</th><th>Brand</th><th style={{ textAlign: 'right' }}>Burn</th><th>State</th></tr>
-              </thead>
-              <tbody>
-                {iwos.slice(0, 7).map((i) => {
-                  const b = brandMeta(i.subsidiaryOrgId);
-                  const burn = computeBurnMeter({ cumulativeMinor: i.cumulativeCostMinor, budgetMinor: i.budgetMinor });
-                  return (
-                    <tr key={i.id}>
-                      <td className="mono" style={{ fontSize: 12 }}>
-                        <Link to={`/delivery/iwo/${i.id}`} className="hover:underline">{i.code}</Link>
-                      </td>
-                      <td>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: 2, background: b.accent }} />{b.short}
-                        </span>
-                      </td>
-                      <td className="tabular" style={{ textAlign: 'right', color: burn.percentage >= 100 ? 'var(--rag-red)' : burn.percentage >= 80 ? 'var(--rag-amber)' : undefined }}>
-                        {Math.round(burn.percentage)}%
-                      </td>
-                      <td><Pill tone={stateTone(i.state)}>{i.state.replace(/_/g, ' ')}</Pill></td>
-                    </tr>
-                  );
-                })}
-                {iwos.length === 0 && (
-                  <tr><td colSpan={4} style={{ padding: 20, textAlign: 'center', color: 'var(--fg-tertiary)' }}>No in-flight IWOs.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div className="zui-page zui-stack">
+        {/* 1. KPIs */}
+        <KPIRow kpis={kpis} />
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <MyTasksCard />
-          <div className="card">
-            <div className="card-head">
-              <h3>Conflict firewall</h3>
-              <span className="sub">Named-competitor watch</span>
-            </div>
-            <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {risks.slice(0, 4).map((r) => (
-                <Link key={r.id} to="/conflict-firewall/breach-risks" style={{ padding: 12, borderRadius: 8, background: 'var(--rag-amber-soft)', display: 'flex', gap: 10 }}>
-                  <Shield size={16} style={{ color: 'var(--rag-amber)', flex: 'none' }} />
-                  <div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600 }}>{r.payload.requestedClientId}</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--rag-amber)', marginTop: 2 }}>
-                      excluded {r.payload.walledBrandIds.length} brand{r.payload.walledBrandIds.length === 1 ? '' : 's'}
-                    </div>
+        {/* 2. Breach banner (only when something is actually overdue) */}
+        {breaches > 0 && (
+          <Banner
+            tone="red"
+            title={`${breaches} IWO${breaches === 1 ? '' : 's'} past SLA`}
+            message={warns > 0 ? `Another ${warns} will breach within 24h unless you intervene.` : 'Open the burn board to see which ones.'}
+            actions={
+              <Button size="sm" variant="secondary" onClick={() => navigate('/delivery/burn')}>
+                Burn &amp; SLA
+              </Button>
+            }
+          />
+        )}
+
+        {/* 3. Sub-brand portfolio roll-up */}
+        <SectionCard
+          title="Brand portfolio"
+          subtitle="Active IWO count, billable value and brand-burn per sub-brand."
+          action={
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/traffic">
+                Open Traffic <ArrowUpRight className="h-3 w-3 ml-1" />
+              </Link>
+            </Button>
+          }
+        >
+          <div
+            style={{
+              display: 'grid',
+              gap: 12,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+            }}
+          >
+            {portfolio.map((p) => {
+              const b = brandMeta(p.id);
+              const burnTone: '' | 'ok' | 'warn' | 'over' =
+                p.burnPct >= 100 ? 'over' : p.burnPct >= 80 ? 'warn' : p.burnPct > 0 ? 'ok' : '';
+              return (
+                <div
+                  key={p.id}
+                  className="zui-card is-hoverable"
+                  style={{ padding: 16, borderTop: `3px solid ${b.accent}`, cursor: 'pointer' }}
+                  onClick={() => navigate('/traffic')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <span
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 6,
+                        background: b.accent,
+                        color: b.ink,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        fontSize: 10,
+                      }}
+                    >
+                      {b.short}
+                    </span>
+                    <div style={{ fontSize: 13, fontWeight: 600, minWidth: 0, flex: 1 }}>{b.name}</div>
+                    {isConflictIsolated(p.id as SubsidiaryId) && (
+                      <span className="zui-rag amber" style={{ fontSize: 9.5, padding: '1px 6px' }}>
+                        Isolated
+                      </span>
+                    )}
                   </div>
-                </Link>
-              ))}
-              {risks.length === 0 && (
-                <div style={{ fontSize: 12.5, color: 'var(--fg-tertiary)', padding: '4px 0' }}>No exclusivity-risk events. Routing walls are holding.</div>
-              )}
-            </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+                    <span style={{ fontSize: 24, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      {p.activeIWOs}
+                    </span>
+                    <span style={{ fontSize: 11.5, color: 'var(--fg-tertiary)' }}>active IWOs</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--fg-tertiary)', marginBottom: 12, fontVariantNumeric: 'tabular-nums' }}>
+                    {p.billable} billable · {p.sla} SLA risk
+                  </div>
+                  <div className={`zui-hbar ${burnTone}`} aria-label={`Burn ${Math.round(p.burnPct)}%`}>
+                    <span style={{ width: `${Math.min(100, p.burnPct)}%` }} />
+                    <span className="zui-hbar-tick" style={{ left: '80%' }} aria-hidden="true" />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                    <span style={{ fontSize: 10.5, color: 'var(--fg-tertiary)' }}>Brand burn</span>
+                    <span style={{ fontSize: 11, color: 'var(--fg-secondary)', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>
+                      {Math.round(p.burnPct)}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+        </SectionCard>
 
-          <div className="card">
-            <div className="card-head">
-              <h3>This week's pulse</h3>
-              <span className="sub">Coming soon</span>
-            </div>
-            <div className="card-body">
-              <div style={{ fontSize: 12.5, color: 'var(--fg-tertiary)', lineHeight: 1.5 }}>
-                Weekly briefs / ECD approvals / inter-co roll-up will surface here once the
-                pulse aggregator (domain-event digest) lands.
+        {/* 4. Main / side — Recent IWO activity · right column */}
+        <div className="zui-grid-main-side">
+          <SectionCard
+            title="Recent IWO activity"
+            subtitle="Live · in-flight"
+            action={
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/delivery/active">
+                  All IWOs <ArrowUpRight className="h-3 w-3 ml-1" />
+                </Link>
+              </Button>
+            }
+            flush
+          >
+            <DataTable<IwoActivityRow>
+              bare
+              rows={activityRows}
+              columns={activityColumns}
+              rowBrandEdge={(r) => r.brand}
+              onRowClick={(r) => navigate(`/delivery/iwo/${r.id}`)}
+            />
+          </SectionCard>
+
+          <div className="zui-stack">
+            <MyTasksCard />
+
+            <SectionCard title="Conflict firewall" subtitle="Named-competitor watch">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {risks.slice(0, 4).map((r) => (
+                  <Link
+                    key={r.id}
+                    to="/conflict-firewall/breach-risks"
+                    style={{
+                      padding: 12,
+                      borderRadius: 10,
+                      background: 'var(--rag-amber-soft)',
+                      display: 'flex',
+                      gap: 10,
+                      color: 'inherit',
+                    }}
+                  >
+                    <Shield size={16} style={{ color: 'var(--rag-amber)', flex: 'none', marginTop: 1 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>
+                        {r.payload.requestedClientId}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--rag-amber)', marginTop: 2 }}>
+                        excluded {r.payload.walledBrandIds.length} brand
+                        {r.payload.walledBrandIds.length === 1 ? '' : 's'}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+                {risks.length === 0 && (
+                  <div style={{ fontSize: 12.5, color: 'var(--fg-tertiary)', padding: '4px 0' }}>
+                    No exclusivity-risk events. Routing walls are holding.
+                  </div>
+                )}
               </div>
-            </div>
+            </SectionCard>
+
+            <SectionCard title="This week's pulse" subtitle="Coming soon">
+              <div style={{ fontSize: 12.5, color: 'var(--fg-tertiary)', lineHeight: 1.5 }}>
+                Weekly briefs / ECD approvals / inter-co roll-up will surface here once
+                the pulse aggregator (domain-event digest) lands.
+              </div>
+            </SectionCard>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
 // ---------------------------------------------------------------------------
 // SUBSIDIARY — Today's work (home-brand scoped, rules-safe)
 // ---------------------------------------------------------------------------
-function SubsidiaryDashboard({ today, brandId }: { today: string; brandId: SubsidiaryId }) {
+
+interface InboxRow {
+  id: string;
+  code: string;
+  masterJobId: string;
+  budgetDisplay: string;
+}
+
+function SubsidiaryDashboard({
+  today,
+  brandId,
+  firstName,
+}: {
+  today: string;
+  brandId: SubsidiaryId;
+  firstName: string;
+}) {
+  const navigate = useNavigate();
   const b = brandMeta(brandId);
   const [issued, setIssued] = useState<InternalWorkOrder[]>([]);
   const [active, setActive] = useState<InternalWorkOrder[]>([]);
@@ -305,66 +480,192 @@ function SubsidiaryDashboard({ today, brandId }: { today: string; brandId: Subsi
 
   const budget = active.reduce((s, r) => s + (r.budgetMinor || 0), 0);
   const cost = active.reduce((s, r) => s + (r.cumulativeCostMinor || 0), 0);
-  const burn = budget > 0 ? cost / budget : 0;
+  const burnPct = budget > 0 ? (cost / budget) * 100 : 0;
   const slaAtRisk = active.filter((i) => {
     const x = slaRisk(i, nowMs);
     return x === 'breach' || x === 'warn';
   }).length;
+  const breaches = active.filter((i) => slaRisk(i, nowMs) === 'breach').length;
   const isolated = isConflictIsolated(brandId);
 
+  const kpis: KpiSpec[] = [
+    {
+      label: 'Awaiting acceptance',
+      value: issued.length,
+      delta: issued.length > 0 ? 'open these first' : 'all clear',
+      trend: issued.length > 0 ? 'down' : 'flat',
+    },
+    {
+      label: 'In-flight IWOs',
+      value: active.length,
+      delta: active.length > 0 ? `${budget ? formatMinor(budget, active[0]?.currency ?? 'UGX') : '—'} billable` : 'nothing active',
+      trend: 'flat',
+    },
+    {
+      label: 'Brand burn',
+      value: `${Math.round(burnPct)}`,
+      unit: '%',
+      delta: burnPct >= 100 ? 'over budget' : burnPct >= 80 ? 'near ceiling' : 'on track',
+      trend: burnPct >= 80 ? 'down' : 'flat',
+      color: burnPct >= 100 ? 'var(--rag-red)' : burnPct >= 80 ? 'var(--rag-amber)' : 'var(--rag-green)',
+    },
+    {
+      label: 'SLA at risk',
+      value: slaAtRisk,
+      delta: breaches > 0 ? `${breaches} past due` : slaAtRisk > 0 ? 'within 24h' : 'none today',
+      trend: slaAtRisk > 0 ? 'down' : 'flat',
+    },
+  ];
+
+  const inboxRows: InboxRow[] = issued.map((i) => ({
+    id: i.id,
+    code: i.code,
+    masterJobId: i.masterJobId,
+    budgetDisplay: formatMinor(i.budgetMinor, i.currency),
+  }));
+
+  const inboxColumns: Column<InboxRow>[] = [
+    { key: 'code',         label: 'IWO',         type: 'mono', width: 150 },
+    { key: 'masterJobId',  label: 'Master job',  type: 'mono' },
+    { key: 'budgetDisplay', label: 'Budget',     width: 140, align: 'right',
+      render: (v) => <span className="zui-money">{String(v)}</span>,
+    },
+    { key: 'id',           label: '',            width: 100, sortable: false, align: 'right',
+      render: (_v, r) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/delivery/iwo/${r.id}`}>Open</Link>
+        </Button>
+      ),
+    },
+  ];
+
+  const greeting = brandId === 'odd-gorilla'
+    ? 'Hold the line.'
+    : `Today's work, ${firstName}.`;
+
   return (
-    <div style={{ padding: 'var(--pad-page)' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, gap: 16 }}>
-        <div style={{ minWidth: 0 }}>
-          <div className="eyebrow" style={{ marginBottom: 6 }}>{b.name} · {today}</div>
-          <h1 className="display">
-            {brandId === 'odd-gorilla' ? 'Hold the line.' : <>Today's <span className="zeus-underline">work</span></>}
-          </h1>
-          <p style={{ marginTop: 12, color: 'var(--fg-secondary)', fontSize: 14, maxWidth: 520 }}>
-            {isolated
-              ? 'Conflict-isolated — your clients are not visible to other brands.'
-              : 'Work routed to your brand. Accept what’s waiting, then track what’s in flight.'}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flex: 'none' }}>
-          <Link to="/delivery/inbox" className="btn btn-secondary"><Inbox size={13} /> Inbox</Link>
-          <Link to="/time" className="btn btn-primary"><Plus size={13} /> Post time</Link>
-        </div>
-      </div>
+    <>
+      <ModuleHeader
+        title={
+          <>
+            {greeting}{' '}
+            <span style={{ color: 'var(--fg-tertiary)', fontWeight: 400 }}>· {today}</span>
+          </>
+        }
+        subtitle={
+          isolated
+            ? 'Conflict-isolated — your clients are not visible to other brands.'
+            : "Work routed to your brand. Accept what's waiting, then track what's in flight."
+        }
+        actions={
+          <>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/delivery/inbox"><Inbox className="h-3.5 w-3.5 mr-1" /> Inbox</Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link to="/time"><Plus className="h-3.5 w-3.5 mr-1" /> Post time</Link>
+            </Button>
+          </>
+        }
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
-        <KPI label="Awaiting acceptance" value={issued.length} accent={b.accent} />
-        <KPI label="In-flight IWOs" value={active.length} accent={b.accent} />
-        <KPI label="Brand burn" value={`${Math.round(burn * 100)}%`} deltaDir={burn > 0.8 ? 'down' : 'up'} accent="#2f9d5c" />
-        <KPI label="SLA at risk" value={slaAtRisk} deltaDir={slaAtRisk > 0 ? 'down' : 'up'} accent="#e18425" />
-      </div>
+      <div className="zui-page zui-stack">
+        {/* Subsidiary brand chip + name on the page itself (the shell shows
+            the global brand chip, this gives the sub-brand its own identity). */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 28,
+              height: 28,
+              borderRadius: 7,
+              background: b.accent,
+              color: b.ink,
+              fontWeight: 700,
+              fontSize: 11,
+            }}
+          >
+            {b.short}
+          </span>
+          <span style={{ fontWeight: 600, color: 'var(--fg-primary)' }}>{b.name}</span>
+          {isolated && (
+            <span className="zui-rag amber" style={{ fontSize: 10, padding: '1px 8px' }}>
+              Conflict-isolated
+            </span>
+          )}
+        </div>
 
-      <SectionH eyebrow="Inbox" title="Awaiting your acceptance" titleSize={17} />
-      <div className="card" style={{ overflow: 'hidden' }}>
-        <table className="tbl">
-          <thead>
-            <tr><th>IWO</th><th>Master job</th><th style={{ textAlign: 'right' }}>Budget</th><th /></tr>
-          </thead>
-          <tbody>
-            {issued.map((i) => (
-              <tr key={i.id} className="brand-edge">
-                <td className="mono" style={{ fontSize: 12 }}>{i.code}</td>
-                <td className="mono" style={{ fontSize: 12, color: 'var(--fg-tertiary)' }}>{i.masterJobId}</td>
-                <td className="tabular" style={{ textAlign: 'right' }}>{formatMinor(i.budgetMinor, i.currency)}</td>
-                <td style={{ textAlign: 'right' }}>
-                  <Link to={`/delivery/iwo/${i.id}`} className="btn btn-ghost" style={{ padding: '4px 10px' }}>Open</Link>
-                </td>
-              </tr>
-            ))}
-            {issued.length === 0 && (
-              <tr><td colSpan={4} style={{ padding: 24, textAlign: 'center', color: 'var(--fg-tertiary)' }}>Nothing waiting on you. Nice.</td></tr>
+        {/* KPIs */}
+        <KPIRow kpis={kpis} />
+
+        {/* Overheating banner */}
+        {breaches > 0 && (
+          <Banner
+            tone="red"
+            title={`${breaches} IWO${breaches === 1 ? '' : 's'} past SLA`}
+            message="These are on your plate. Close them first so the burn board clears."
+            actions={
+              <Button size="sm" variant="secondary" onClick={() => navigate('/delivery/burn')}>
+                Open burn board
+              </Button>
+            }
+          />
+        )}
+
+        {/* Inbox — awaiting acceptance */}
+        <SectionCard
+          title="Awaiting your acceptance"
+          subtitle={
+            issued.length === 0
+              ? 'Nothing waiting on you.'
+              : `${issued.length} IWO${issued.length === 1 ? '' : 's'} issued to your brand — accept to start the clock.`
+          }
+          flush
+        >
+          {issued.length === 0 ? (
+            <div style={{ padding: 32, textAlign: 'center', color: 'var(--fg-tertiary)', fontSize: 13 }}>
+              Nice. Nothing waiting on you.
+            </div>
+          ) : (
+            <DataTable<InboxRow>
+              bare
+              rows={inboxRows}
+              columns={inboxColumns}
+              rowBrandEdge={() => brandId}
+              onRowClick={(r) => navigate(`/delivery/iwo/${r.id}`)}
+            />
+          )}
+        </SectionCard>
+
+        {/* In-flight summary + My tasks */}
+        <div className="zui-grid-main-side">
+          <SectionCard
+            title="In-flight burn"
+            subtitle={`${active.length} IWO${active.length === 1 ? '' : 's'} active · ceiling at 80%`}
+          >
+            {active.length === 0 ? (
+              <div style={{ padding: 16, color: 'var(--fg-tertiary)', fontSize: 13 }}>
+                Nothing in flight yet.
+              </div>
+            ) : (
+              <Hbars
+                rows={active.slice(0, 6).map((i) => {
+                  const bm = computeBurnMeter({ cumulativeMinor: i.cumulativeCostMinor, budgetMinor: i.budgetMinor });
+                  return { label: i.code, value: Math.round(bm.percentage), display: `${Math.round(bm.percentage)}%` };
+                })}
+                max={100}
+                threshold={80}
+                warnAt={70}
+                asPercent
+              />
             )}
-          </tbody>
-        </table>
-      </div>
+          </SectionCard>
 
-      <SectionH eyebrow="Intelligence" title="My tasks" titleSize={17} />
-      <MyTasksCard />
-    </div>
+          <MyTasksCard />
+        </div>
+      </div>
+    </>
   );
 }
