@@ -10,12 +10,13 @@
  * accept or reject. Firestore rules + the callable both check this; the
  * UI surfaces the resulting error as a banner.
  *
- * UI refresh (batch 3b): PageHero + brand-edge .card rows + btn-accept/
- * btn-reject. All data wiring and data-testids preserved.
+ * Re-skin: Zeus-UI primitives (ModuleHeader, Banner, SectionCard,
+ * DataTable, RagBadge). All data wiring, callable invocations and
+ * data-testids are preserved verbatim — Playwright specs keep passing.
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCurrentDawinUser } from '@/core/settings';
 import type { InternalWorkOrder } from '@/modules/assignment';
 import type { SubsidiaryId } from '@/core/settings/types';
@@ -23,7 +24,15 @@ import { subscribeIWOInbox, subscribeIWOActive } from '../services/firestore';
 import { acceptWorkOrderFn, rejectWorkOrderFn } from '../services/firebase';
 import { resolveHomeSubsidiaryId } from '../components/deliveryAccess';
 import { isConflictIsolated } from '@/core/navigation/manifest';
-import { PageHero, SectionH, Pill } from '@/shared/components/refresh';
+import {
+  Banner,
+  DataTable,
+  ModuleHeader,
+  RagBadge,
+  SectionCard,
+  type Column,
+  type SubBrandId,
+} from '@/shared/components/zeus-ui';
 
 function formatMinor(amountMinor: number, currency: string): string {
   return `${currency} ${(amountMinor / 100).toLocaleString(undefined, {
@@ -42,6 +51,7 @@ function formatTimestamp(ts: InternalWorkOrder['issuedAt']): string {
 }
 
 export default function IWOInboxPage() {
+  const navigate = useNavigate();
   const { dawinUser } = useCurrentDawinUser();
   const homeSub = useMemo<SubsidiaryId | null>(
     () => (dawinUser ? (resolveHomeSubsidiaryId(dawinUser) as SubsidiaryId | null) : null),
@@ -88,142 +98,265 @@ export default function IWOInboxPage() {
   };
 
   if (!dawinUser) {
-    return <div style={{ padding: 'var(--pad-page)', color: 'var(--fg-tertiary)' }}>Loading user…</div>;
-  }
-  if (!homeSub) {
     return (
-      <div style={{ padding: 'var(--pad-page)' }}>
-        <PageHero eyebrow="Delivery" title="IWO inbox" body="You don't appear to have access to any operating subsidiary. Speak to your administrator." />
+      <div style={{ padding: 'var(--pad-page)', color: 'var(--fg-tertiary)' }}>
+        Loading user…
       </div>
     );
   }
+  if (!homeSub) {
+    return (
+      <>
+        <ModuleHeader
+          title="IWO inbox"
+          subtitle="Delivery — brand access"
+        />
+        <div className="zui-page">
+          <Banner
+            tone="amber"
+            title="No operating brand"
+            message="You don't appear to have access to any operating subsidiary. Speak to your administrator."
+          />
+        </div>
+      </>
+    );
+  }
 
+  const brand = homeSub as SubBrandId;
   const showIsolationBanner = isConflictIsolated(homeSub);
 
+  // ─── Awaiting-acceptance table ───────────────────────────────────────
+  interface InboxRow {
+    id: string;
+    code: string;
+    budgetDisplay: string;
+    issuedDisplay: string;
+    iwo: InternalWorkOrder; // kept for the action buttons
+  }
+  const inboxRows: InboxRow[] = inbox.map((iwo) => ({
+    id: iwo.id,
+    code: iwo.code,
+    budgetDisplay: formatMinor(iwo.budgetMinor, iwo.currency),
+    issuedDisplay: formatTimestamp(iwo.issuedAt),
+    iwo,
+  }));
+  const inboxColumns: Column<InboxRow>[] = [
+    {
+      key: 'code',
+      label: 'IWO',
+      type: 'mono',
+      width: 160,
+      render: (v, r) => (
+        <Link
+          to={`/delivery/iwo/${r.id}`}
+          className="zui-mono hover:underline"
+          style={{ fontWeight: 600, color: 'var(--fg-primary)' }}
+          data-testid={`iwo-row-${r.id}-code`}
+        >
+          {String(v)}
+        </Link>
+      ),
+    },
+    {
+      key: 'budgetDisplay',
+      label: 'Budget',
+      width: 180,
+      align: 'right',
+      render: (v, r) => (
+        <span className="zui-money" data-testid={`iwo-row-${r.id}-budget`}>
+          {String(v)}
+        </span>
+      ),
+    },
+    {
+      key: 'issuedDisplay',
+      label: 'Issued',
+      type: 'date',
+    },
+    {
+      key: 'id',
+      label: '',
+      width: 180,
+      align: 'right',
+      sortable: false,
+      render: (_v, r) => {
+        const busy = busyId === r.id;
+        return (
+          <span style={{ display: 'inline-flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              data-testid={`iwo-row-${r.id}-accept`}
+              onClick={(e) => { e.stopPropagation(); handleAccept(r.iwo); }}
+              disabled={busy}
+              className="btn btn-accept"
+            >
+              {busy ? '…' : 'Accept'}
+            </button>
+            <button
+              type="button"
+              data-testid={`iwo-row-${r.id}-reject`}
+              onClick={(e) => { e.stopPropagation(); handleReject(r.iwo); }}
+              disabled={busy}
+              className="btn btn-reject"
+            >
+              Reject
+            </button>
+          </span>
+        );
+      },
+    },
+  ];
+
+  // ─── In-flight table ─────────────────────────────────────────────────
+  interface ActiveRow {
+    id: string;
+    code: string;
+    spendDisplay: string;
+    state: string;
+  }
+  const activeRows: ActiveRow[] = active.map((iwo) => ({
+    id: iwo.id,
+    code: iwo.code,
+    spendDisplay: `${formatMinor(iwo.cumulativeCostMinor, iwo.currency)} of ${formatMinor(
+      iwo.budgetMinor,
+      iwo.currency,
+    )}`,
+    state: iwo.state,
+  }));
+  const activeColumns: Column<ActiveRow>[] = [
+    {
+      key: 'code',
+      label: 'IWO',
+      type: 'mono',
+      width: 160,
+      render: (v, r) => (
+        <Link
+          to={`/delivery/iwo/${r.id}`}
+          className="zui-mono hover:underline"
+          style={{ fontWeight: 600, color: 'var(--fg-primary)' }}
+        >
+          {String(v)}
+        </Link>
+      ),
+    },
+    {
+      key: 'spendDisplay',
+      label: 'Spend vs budget',
+      align: 'right',
+      render: (v) => <span className="zui-money">{String(v)}</span>,
+    },
+    {
+      key: 'state',
+      label: 'State',
+      width: 180,
+      render: (v) => <RagBadge tone="blue" label={String(v).replace(/_/g, ' ').toLowerCase()} />,
+    },
+  ];
+
   return (
-    <div style={{ padding: 'var(--pad-page)' }} data-testid="iwo-inbox-page">
-      <PageHero
-        eyebrow={`${homeSub} · Delivery`}
+    <div data-testid="iwo-inbox-page">
+      <ModuleHeader
         title="IWO inbox"
-        body="Internal work orders issued to your brand. Accept to lock the budget hold; reject (with reason) to release it."
+        subtitle={
+          <>
+            Internal work orders issued to your brand. Accept to lock the budget hold;
+            reject (with reason) to release it.
+          </>
+        }
       />
 
-      {showIsolationBanner && (
-        <div
-          role="note"
-          data-testid="iwo-inbox-isolation-banner"
-          style={{
-            padding: '10px 14px',
-            marginBottom: 16,
-            borderRadius: 'var(--radius)',
-            background: 'var(--rag-amber-soft)',
-            color: 'var(--rag-amber)',
-            border: '1px solid var(--rag-amber)',
-            fontSize: 13,
-            fontWeight: 500,
-          }}
-        >
-          Conflict-isolated workspace — your clients are not visible to other brands.
-        </div>
-      )}
-
-      {err && (
-        <div
-          role="alert"
-          data-testid="iwo-inbox-error"
-          style={{
-            padding: 12,
-            marginBottom: 16,
-            borderRadius: 'var(--radius)',
-            background: 'var(--rag-red-soft)',
-            color: 'var(--rag-red)',
-            border: '1px solid var(--rag-red)',
-            fontSize: 13,
-          }}
-        >
-          {err}
-        </div>
-      )}
-
-      <section data-testid="iwo-inbox-awaiting">
-        <SectionH
-          title={
-            <>
-              Awaiting acceptance (<span data-testid="iwo-inbox-awaiting-count">{inbox.length}</span>)
-            </>
-          }
-          titleSize={15}
-        />
-        {inbox.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }} data-testid="iwo-inbox-empty">
-            No new work orders issued to you.
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {inbox.map((iwo) => {
-              const busy = busyId === iwo.id;
-              return (
-                <div key={iwo.id} className="card card-pad brand-edge" data-testid={`iwo-row-${iwo.id}`}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                    <div>
-                      <Link to={`/delivery/iwo/${iwo.id}`} className="mono hover:underline" style={{ fontWeight: 600 }} data-testid={`iwo-row-${iwo.id}-code`}>
-                        {iwo.code}
-                      </Link>
-                      <div style={{ fontSize: 11.5, color: 'var(--fg-tertiary)', marginTop: 2 }}>
-                        <span data-testid={`iwo-row-${iwo.id}-budget`}>{formatMinor(iwo.budgetMinor, iwo.currency)}</span>
-                        {' · issued '}{formatTimestamp(iwo.issuedAt)}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, flex: 'none' }}>
-                      <button
-                        type="button"
-                        data-testid={`iwo-row-${iwo.id}-accept`}
-                        onClick={() => handleAccept(iwo)}
-                        disabled={busy}
-                        className="btn btn-accept"
-                      >
-                        {busy ? '…' : 'Accept'}
-                      </button>
-                      <button
-                        type="button"
-                        data-testid={`iwo-row-${iwo.id}-reject`}
-                        onClick={() => handleReject(iwo)}
-                        disabled={busy}
-                        className="btn btn-reject"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      <div className="zui-page zui-stack">
+        {showIsolationBanner && (
+          <div role="note" data-testid="iwo-inbox-isolation-banner">
+            <Banner
+              tone="amber"
+              title="Conflict-isolated workspace"
+              message="Your clients are not visible to other brands."
+            />
           </div>
         )}
-      </section>
 
-      <SectionH title={`In-flight (${active.length})`} titleSize={15} />
-      {active.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>Nothing in flight.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {active.map((iwo) => (
-            <div key={iwo.id} className="card card-pad brand-edge">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <Link to={`/delivery/iwo/${iwo.id}`} className="mono hover:underline" style={{ fontWeight: 600 }}>
-                  {iwo.code}
-                </Link>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 12, color: 'var(--fg-tertiary)' }} className="tabular">
-                    {formatMinor(iwo.cumulativeCostMinor, iwo.currency)} of {formatMinor(iwo.budgetMinor, iwo.currency)}
-                  </span>
-                  <Pill tone="blue">{iwo.state}</Pill>
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+        {err && (
+          <div role="alert" data-testid="iwo-inbox-error">
+            <Banner tone="red" title="Action failed" message={err} />
+          </div>
+        )}
+
+        {/* Awaiting acceptance */}
+        <section data-testid="iwo-inbox-awaiting">
+          <SectionCard
+            title={
+              <>
+                Awaiting acceptance (
+                <span data-testid="iwo-inbox-awaiting-count">{inbox.length}</span>
+                )
+              </>
+            }
+            subtitle={
+              inbox.length === 0
+                ? 'Nothing issued to your brand right now.'
+                : 'Accept locks the budget hold · Reject (with reason) releases it.'
+            }
+            flush
+          >
+            {inbox.length === 0 ? (
+              <p
+                data-testid="iwo-inbox-empty"
+                style={{
+                  padding: 24,
+                  textAlign: 'center',
+                  fontSize: 13,
+                  color: 'var(--fg-tertiary)',
+                  margin: 0,
+                }}
+              >
+                No new work orders issued to you.
+              </p>
+            ) : (
+              <DataTable<InboxRow>
+                bare
+                rows={inboxRows}
+                columns={inboxColumns}
+                rowBrandEdge={() => brand}
+                rowTestId={(r) => `iwo-row-${r.id}`}
+              />
+            )}
+          </SectionCard>
+        </section>
+
+        {/* In-flight */}
+        <SectionCard
+          title={`In-flight (${active.length})`}
+          subtitle={
+            active.length === 0
+              ? 'Nothing in flight.'
+              : 'Accepted IWOs currently burning. Click a row to open the workspace.'
+          }
+          flush
+        >
+          {active.length === 0 ? (
+            <p
+              style={{
+                padding: 24,
+                textAlign: 'center',
+                fontSize: 13,
+                color: 'var(--fg-tertiary)',
+                margin: 0,
+              }}
+            >
+              Nothing in flight.
+            </p>
+          ) : (
+            <DataTable<ActiveRow>
+              bare
+              rows={activeRows}
+              columns={activeColumns}
+              rowBrandEdge={() => brand}
+              onRowClick={(r) => navigate(`/delivery/iwo/${r.id}`)}
+            />
+          )}
+        </SectionCard>
+      </div>
     </div>
   );
 }

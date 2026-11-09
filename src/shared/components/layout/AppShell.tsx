@@ -705,6 +705,7 @@ function AppShellFrame({ children }: AppShellProps) {
           sidebarExpanded ? 'lg:pl-[16.5rem]' : 'lg:pl-[5.5rem]',
           isScrolled && 'shadow-[var(--shadow-sm)]'
         )}
+        style={{ boxShadow: 'inset 0 -2px 0 var(--zeus-red)' }}
       >
         {/* Row 1 — breadcrumb · search · actions */}
         <div className="flex h-14 items-center gap-3 pr-6">
@@ -843,10 +844,13 @@ function AppShellFrame({ children }: AppShellProps) {
 
       {/* Mobile Header */}
       <header
-        ref={mobileHeaderRef} className={cn(
-        "lg:hidden sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 transition-shadow duration-200",
-        isScrolled && "shadow-sm"
-      )}>
+        ref={mobileHeaderRef}
+        className={cn(
+          "lg:hidden sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 transition-shadow duration-200",
+          isScrolled && "shadow-sm"
+        )}
+        style={{ boxShadow: 'inset 0 -2px 0 var(--zeus-red)' }}
+      >
         <Button variant="ghost" size="icon" onClick={toggleSidebar}>
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>

@@ -1,0 +1,506 @@
+/* ============================================================
+   Zeus-UI — DawinOS "soft skin" primitives for ZeusOS.
+   Ported from the design handoff (design_handoff_zeusos_dawin_ui).
+   Consumed by src/shared/components/zeus-ui/*.
+   All class names are `zui-*`-prefixed to avoid colliding with
+   existing shadcn/Tailwind utility classes.
+   ============================================================ */
+
+/* ---- Card ---- */
+.zui-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+.zui-card.is-hoverable:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-default);
+}
+.zui-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: var(--pad-card, 20px) var(--pad-card, 20px) 8px;
+}
+.zui-card-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg-primary);
+  letter-spacing: -0.005em;
+}
+.zui-card-head .zui-card-sub {
+  font-size: 11px;
+  color: var(--fg-tertiary);
+}
+.zui-card-body { padding: 0 var(--pad-card, 20px) var(--pad-card, 20px); }
+.zui-card-pad  { padding: var(--pad-card, 20px); }
+
+/* ---- Eyebrow / caption ---- */
+.zui-eyebrow {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  line-height: 1.3;
+}
+
+/* ---- KPI card ---- */
+.zui-kpi-row {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(var(--zui-kpi-cols, 4), minmax(0, 1fr));
+}
+@media (max-width: 960px) {
+  .zui-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .zui-kpi-row { grid-template-columns: 1fr; }
+}
+.zui-kpi {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 14px);
+  padding: var(--pad-card, 20px);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.zui-kpi-label {
+  font-size: 12.5px;
+  color: var(--fg-secondary);
+  letter-spacing: 0.005em;
+}
+.zui-kpi-value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+.zui-kpi-value .zui-kpi-unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-tertiary);
+  margin-left: 4px;
+  letter-spacing: 0;
+}
+.zui-kpi-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-tertiary);
+}
+.zui-kpi-delta.up   { color: var(--rag-green); }
+.zui-kpi-delta.down { color: var(--rag-red); }
+.zui-kpi-spark {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  width: 60%;
+  height: 36px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* ---- Banner ---- */
+.zui-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--bg-surface);
+}
+.zui-banner-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex: none;
+}
+.zui-banner-body { flex: 1; min-width: 0; }
+.zui-banner-title { font-size: 13px; font-weight: 600; color: var(--fg-primary); }
+.zui-banner-msg   { font-size: 12px; color: var(--fg-secondary); margin-top: 2px; }
+.zui-banner-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.zui-banner.tone-amber { background: var(--rag-amber-soft); border-color: rgba(225, 132, 37, 0.3); }
+.zui-banner.tone-red   { background: var(--rag-red-soft);   border-color: rgba(212, 65, 58, 0.3); }
+.zui-banner.tone-green { background: var(--rag-green-soft); border-color: rgba(78, 138, 74, 0.3); }
+.zui-banner.tone-blue  { background: var(--rag-blue-soft);  border-color: rgba(65, 114, 168, 0.3); }
+.zui-banner.tone-amber .zui-banner-icon { background: var(--rag-amber); }
+.zui-banner.tone-red   .zui-banner-icon { background: var(--rag-red); }
+.zui-banner.tone-green .zui-banner-icon { background: var(--rag-green); }
+.zui-banner.tone-blue  .zui-banner-icon { background: var(--rag-blue); }
+
+/* ---- RAG badge ---- */
+.zui-rag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  background: var(--bg-sunken);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+.zui-rag .zui-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.zui-rag.green { background: var(--rag-green-soft); color: var(--rag-green); }
+.zui-rag.amber { background: var(--rag-amber-soft); color: var(--rag-amber); }
+.zui-rag.red   { background: var(--rag-red-soft);   color: var(--rag-red); }
+.zui-rag.blue  { background: var(--rag-blue-soft);  color: var(--rag-blue); }
+.zui-rag.na    { background: var(--bg-sunken);      color: var(--rag-na, #9c9aa1); }
+
+/* ---- Brand chip ---- */
+.zui-brand-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 100px;
+  background: var(--bg-sunken);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--fg-primary);
+}
+.zui-brand-chip .zui-brand-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--brand-accent, var(--zeus-navy));
+}
+
+/* ---- Horizontal bars (burn, capacity, funnel) ---- */
+.zui-hbar-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 160px) 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12.5px;
+  color: var(--fg-primary);
+}
+.zui-hbar-row + .zui-hbar-row { border-top: 1px solid var(--border-subtle); }
+.zui-hbar-label { color: var(--fg-secondary); font-size: 12.5px; font-weight: 500; }
+.zui-hbar {
+  position: relative;
+  height: 10px;
+  background: var(--bg-sunken);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.zui-hbar > span {
+  display: block;
+  height: 100%;
+  border-radius: 100px;
+  background: var(--brand-accent, var(--zeus-navy));
+  transition: width 240ms ease;
+}
+.zui-hbar.warn > span { background: var(--rag-amber); }
+.zui-hbar.over > span { background: var(--rag-red); }
+.zui-hbar.ok   > span { background: var(--rag-green); }
+.zui-hbar-tick {
+  position: absolute; top: -2px; bottom: -2px; width: 1px;
+  background: var(--border-strong);
+}
+.zui-hbar-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--fg-primary);
+  min-width: 48px;
+  text-align: right;
+  font-weight: 500;
+}
+
+/* ---- Filter bar ---- */
+.zui-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.zui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--fg-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.zui-chip:hover { background: var(--bg-sunken); color: var(--fg-primary); }
+.zui-chip.active {
+  background: var(--fg-primary);
+  color: var(--bg-surface);
+  border-color: var(--fg-primary);
+}
+
+/* ---- DataTable ---- */
+.zui-tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+.zui-tbl thead th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  user-select: none;
+}
+.zui-tbl thead th.sortable { cursor: pointer; }
+.zui-tbl thead th .zui-sort-arrow { margin-left: 4px; color: var(--fg-primary); }
+.zui-tbl tbody td {
+  padding: 0 14px;
+  height: var(--row-h, 40px);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+  color: var(--fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+.zui-tbl tbody tr { transition: background 120ms ease; }
+.zui-tbl tbody tr:hover { background: var(--bg-sunken); cursor: pointer; }
+.zui-tbl tbody tr:last-child td { border-bottom: 0; }
+.zui-tbl tbody tr.is-brand-edge { box-shadow: inset 3px 0 0 var(--brand-accent); }
+
+.zui-tbl-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ---- Person chip ---- */
+.zui-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.zui-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 600;
+  color: #fff;
+  flex: none;
+}
+.zui-person-name { font-size: 12.5px; color: var(--fg-primary); truncate: ellipsis; }
+
+/* ---- Mini bar (progress) ---- */
+.zui-mini-bar {
+  position: relative;
+  height: 6px;
+  background: var(--bg-sunken);
+  border-radius: 100px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100px;
+}
+.zui-mini-bar > span {
+  display: block; height: 100%; border-radius: 100px;
+  background: var(--rag-green);
+  transition: width 200ms ease;
+}
+.zui-mini-bar.warn > span { background: var(--rag-amber); }
+.zui-mini-bar.over > span { background: var(--rag-red); }
+
+/* ---- Drawer ---- */
+.zui-drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(20, 20, 22, 0.40);
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+  animation: zui-fade-in 160ms ease;
+}
+.zui-drawer {
+  background: var(--bg-surface);
+  width: 480px;
+  max-width: 100vw;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: zui-slide-in 220ms cubic-bezier(.22,.61,.36,1);
+}
+.zui-drawer-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.zui-drawer-title { font-size: 17px; font-weight: 600; margin: 0; color: var(--fg-primary); }
+.zui-drawer-sub   { font-size: 12.5px; color: var(--fg-tertiary); margin-top: 2px; }
+.zui-drawer-body  { padding: 20px; flex: 1; overflow-y: auto; }
+.zui-drawer-foot  {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 12px 20px;
+  background: var(--bg-sunken);
+  border-top: 1px solid var(--border-subtle);
+}
+@keyframes zui-slide-in {
+  from { transform: translateX(32px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes zui-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---- Icon button (drawer close, filter reset) ---- */
+.zui-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-secondary);
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.zui-icon-btn:hover { background: var(--bg-sunken); color: var(--fg-primary); }
+
+/* ---- Pill tab track (sliding indicator) ---- */
+.zui-tab-track {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  background: var(--bg-sunken);
+  border-radius: 100px;
+  gap: 2px;
+}
+.zui-tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 100px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg-secondary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: color 160ms ease;
+  white-space: nowrap;
+}
+.zui-tab:hover { color: var(--fg-primary); }
+.zui-tab.active { color: var(--bg-surface); }
+.zui-tab-ind {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  background: var(--fg-primary);
+  border-radius: 100px;
+  transition: transform 300ms cubic-bezier(.3,.8,.2,1), width 300ms cubic-bezier(.3,.8,.2,1);
+  z-index: 0;
+}
+
+/* ---- Money / mono helpers ---- */
+.zui-money { font-family: var(--font-mono, ui-monospace, Menlo, monospace); font-size: 12.5px; }
+.zui-mono  { font-family: var(--font-mono, ui-monospace, Menlo, monospace); font-size: 11.5px; letter-spacing: 0.01em; }
+
+/* ---- Sub-brand dot (chip) — maps to --sb-* tokens ---- */
+.zui-brand-dot[data-sb="zeus-the-agency"] { background: #f5d900; }
+.zui-brand-dot[data-sb="zeus-digital"]    { background: #00c5e5; }
+.zui-brand-dot[data-sb="labyrinth"]       { background: #c8f0d6; }
+.zui-brand-dot[data-sb="odd-gorilla"]     { background: #ffb0b8; }
+.zui-brand-dot[data-sb="house-of-zeus"]   { background: #c8ff3c; }
+.zui-brand-dot[data-sb="zeus-group"]      { background: #0a1f4a; }
+
+/* ---- Module header pill track (soft skin) ---- */
+.zui-module-head {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 14px 32px 12px;
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.zui-module-head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.zui-module-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--fg-primary);
+}
+.zui-module-sub {
+  font-size: 12.5px;
+  color: var(--fg-secondary);
+  margin-top: 2px;
+}
+.zui-module-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ---- Spacing helpers ---- */
+.zui-page { padding: 24px 32px 64px; max-width: 1640px; margin: 0 auto; }
+@media (max-width: 960px) { .zui-page { padding: 16px; } }
+.zui-stack  > * + * { margin-top: 16px; }
+.zui-stack-lg > * + * { margin-top: 24px; }
+
+/* ---- Two-col / three-col grids ---- */
+.zui-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.zui-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.zui-grid-main-side { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+@media (max-width: 960px) {
+  .zui-grid-2, .zui-grid-3, .zui-grid-main-side { grid-template-columns: 1fr; }
+}
+
+/* ---- Dark-theme tweaks ---- */
+[data-theme="dark"] .zui-kpi,
+.dark .zui-kpi,
+[data-theme="dark"] .zui-card,
+.dark .zui-card {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
