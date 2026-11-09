@@ -59,8 +59,24 @@ import {
   DataTable,
   type DataTableColumn,
 } from '@/shared/components/data-display';
+import {
+  Sparkline as ZuiSparkline,
+  KPIRow as ZuiKPIRow,
+  Banner as ZuiBanner,
+  Hbars as ZuiHbars,
+  SectionCard as ZuiSectionCard,
+  Drawer as ZuiDrawer,
+  DataTable as ZuiDataTable,
+  ModuleHeader as ZuiModuleHeader,
+  BrandChip as ZuiBrandChip,
+  PersonChip as ZuiPersonChip,
+  RagBadge as ZuiRagBadge,
+  type Column as ZuiColumn,
+  type SubBrandId as ZuiSubBrandId,
+  type RagTone as ZuiRagTone,
+} from '@/shared/components/zeus-ui';
 
-type Tab = 'components' | 'colors' | 'typography' | 'spacing';
+type Tab = 'components' | 'zeus-ui' | 'colors' | 'typography' | 'spacing';
 
 // ─── Sample data for DataTable demo
 interface DemoRow {
@@ -193,6 +209,7 @@ export default function DesignSystemPage() {
         subtitle="Living reference for every primitive, token and pattern in the ZeusOS portal."
         tabs={[
           { id: 'components', label: 'Components',  path: '#components' },
+          { id: 'zeus-ui',    label: 'Zeus-UI',     path: '#zeus-ui' },
           { id: 'colors',     label: 'Color tokens',path: '#colors' },
           { id: 'typography', label: 'Typography',  path: '#typography' },
           { id: 'spacing',    label: 'Spacing',     path: '#spacing' },
@@ -207,7 +224,7 @@ export default function DesignSystemPage() {
       {/* In-page tab switcher (hash-router would be heavier here; just toggle state) */}
       <div className="max-w-[1640px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <div className="flex flex-wrap gap-2 mb-4">
-          {(['components', 'colors', 'typography', 'spacing'] as const).map((t) => (
+          {(['components', 'zeus-ui', 'colors', 'typography', 'spacing'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -501,6 +518,8 @@ export default function DesignSystemPage() {
           </div>
         )}
 
+        {tab === 'zeus-ui' && <ZeusUiShowcase />}
+
         {tab === 'colors' && (
           <div className="flex flex-col gap-8 pb-12">
             {COLOR_GROUPS.map((group) => (
@@ -654,6 +673,316 @@ function SampleType({
       {element === 'h3' && <h3>{children}</h3>}
       {element === 'p' && <p style={{ maxWidth: '64ch' }}>{children}</p>}
       {element === 'caption' && <p className="caption">{children}</p>}
+    </div>
+  );
+}
+
+/* ─── Zeus-UI (DawinOS soft-skin) showcase ────────────────────────────
+   Live gallery of the primitives in src/shared/components/zeus-ui.
+   This is the paste-ready reference for other pages — the same props
+   and markup render identically in product surfaces. */
+
+interface IwoDemoRow {
+  code: string;
+  brand: ZuiSubBrandId;
+  client: string;
+  owner: string;
+  stage: 'waiting' | 'in_flight' | 'review' | 'overheating';
+  burn: number;
+  dueIn: string;
+  budget: string;
+}
+
+const ZUI_STAGE_MAP: Record<IwoDemoRow['stage'], { tone: ZuiRagTone; label: string }> = {
+  waiting:     { tone: 'blue',  label: 'Waiting' },
+  in_flight:   { tone: 'green', label: 'In flight' },
+  review:      { tone: 'amber', label: 'ECD review' },
+  overheating: { tone: 'red',   label: 'Overheating' },
+};
+
+const ZUI_IWOS: IwoDemoRow[] = [
+  { code: 'IWO-24-0812', brand: 'zeus-digital',    client: 'Equity Bank',        owner: 'Amina Wanjiru',  stage: 'in_flight',   burn: 62, dueIn: 'in 4 days',  budget: 'KES 4.8M' },
+  { code: 'IWO-24-0806', brand: 'house-of-zeus',   client: 'Safaricom PLC',      owner: 'Jon Mutuku',     stage: 'overheating', burn: 91, dueIn: 'overdue',    budget: 'KES 7.2M' },
+  { code: 'IWO-24-0801', brand: 'zeus-the-agency', client: 'KCB Group',          owner: 'Faith Nabulime', stage: 'review',      burn: 72, dueIn: 'tomorrow',   budget: 'KES 12.5M' },
+  { code: 'IWO-24-0793', brand: 'labyrinth',       client: 'Nation Media',       owner: 'Jeremy Okello',  stage: 'in_flight',   burn: 54, dueIn: 'in 9 days',  budget: 'KES 3.6M' },
+  { code: 'IWO-24-0784', brand: 'odd-gorilla',     client: 'Lipton KE',          owner: 'Ivy Githinji',   stage: 'waiting',     burn: 0,  dueIn: 'pending',    budget: 'KES 2.2M' },
+];
+
+const ZUI_IWO_COLUMNS: ZuiColumn<IwoDemoRow>[] = [
+  { key: 'code',   label: 'IWO',    type: 'mono',     width: 130 },
+  { key: 'brand',  label: 'Brand',  type: 'brand',    width: 150 },
+  { key: 'client', label: 'Client', type: 'text' },
+  { key: 'owner',  label: 'Owner',  type: 'person' },
+  { key: 'stage',  label: 'Stage',  type: 'status',   statusMap: ZUI_STAGE_MAP, width: 130 },
+  { key: 'burn',   label: 'Burn',   type: 'progress', width: 170 },
+  { key: 'dueIn',  label: 'Due',    type: 'date',     width: 110 },
+  { key: 'budget', label: 'Budget', type: 'money',    width: 120, align: 'right' },
+];
+
+function ZeusUiShowcase() {
+  const [tab, setTab] = useState('dashboard');
+  const [drawerRow, setDrawerRow] = useState<IwoDemoRow | null>(null);
+
+  return (
+    <div className="flex flex-col gap-10 pb-16">
+      {/* 1. KPI row */}
+      <Section title="KPIRow — four-up KPIs with sparklines">
+        <ZuiKPIRow
+          kpis={[
+            {
+              label: 'Revenue YTD',
+              value: 'KES 1.42',
+              unit: 'B',
+              delta: '+12% vs plan',
+              trend: 'up',
+              spark: [42, 48, 51, 55, 54, 62, 68, 71, 69, 75, 81, 92],
+              color: 'var(--zeus-navy)',
+            },
+            {
+              label: 'Gross margin',
+              value: '34.6',
+              unit: '%',
+              delta: '+1.8 pts',
+              trend: 'up',
+              spark: [31, 32, 31, 33, 33, 34, 34.5, 34, 35, 34.4, 34.6],
+              color: 'var(--rag-green)',
+            },
+            {
+              label: 'Pipeline cover',
+              value: '2.3',
+              unit: '×',
+              delta: 'on track',
+              trend: 'flat',
+              spark: [1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.3, 2.2, 2.3, 2.3],
+              color: 'var(--zeus-red)',
+            },
+            {
+              label: 'Talent utilisation',
+              value: '78',
+              unit: '%',
+              delta: '−3 pts vs May',
+              trend: 'down',
+              spark: [82, 84, 83, 85, 86, 84, 82, 80, 79, 78],
+              color: 'var(--rag-amber)',
+            },
+          ]}
+        />
+      </Section>
+
+      {/* 2. ModuleHeader with pill tab track */}
+      <Section title="ModuleHeader — title + subtitle + sliding pill tabs">
+        <div className="rounded-lg overflow-hidden border border-[var(--border-subtle)]">
+          <ZuiModuleHeader
+            title="Traffic"
+            subtitle="Route open master jobs to the right brand · 6 waiting"
+            actions={<Button size="sm">New brief</Button>}
+            tabs={[
+              { id: 'dashboard', label: 'Routing queue' },
+              { id: 'active',    label: 'Active IWOs' },
+              { id: 'capacity',  label: 'Brand capacity' },
+              { id: 'overrides', label: 'Override log' },
+            ]}
+            activeTab={tab}
+            onTabChange={setTab}
+          />
+          <div className="px-8 py-10 bg-[var(--bg-app)] text-[12.5px] text-[var(--fg-tertiary)]">
+            <code className="font-mono">activeTab = "{tab}"</code>
+          </div>
+        </div>
+      </Section>
+
+      {/* 3. Banners */}
+      <Section title="Banner — tone-tinted call-outs">
+        <div className="flex flex-col gap-3">
+          <ZuiBanner
+            tone="amber"
+            title="3 IWOs are waiting on client acceptance"
+            message="Two of them have been open since Monday. Nudging now preserves margin."
+            actions={<Button size="sm" variant="secondary">Open delivery inbox</Button>}
+          />
+          <ZuiBanner
+            tone="red"
+            title="Safaricom 'Twaweza' is overheating at 91% burn"
+            message="ECD attention needed. Spend cap at 80%."
+          />
+          <ZuiBanner
+            tone="green"
+            title="Labyrinth NMG summit margin +4.2 pts vs plan"
+            message="Running ahead on fee and under on supplier cost."
+          />
+          <ZuiBanner
+            tone="blue"
+            title="Finance posted the June journal entries"
+            message="12 journals · KES 48.2M · all reconciled against the bank feed."
+          />
+        </div>
+      </Section>
+
+      {/* 4. Horizontal bars (burn, funnel) */}
+      <Section title="Hbars — thresholded bar lists">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ZuiSectionCard
+            title="Brand burn against 80% ceiling"
+            subtitle="Spend-to-budget per sub-brand"
+          >
+            <ZuiHbars
+              rows={[
+                { label: 'Zeus The Agency', value: 72, display: '72%' },
+                { label: 'Zeus Digital',    value: 86, display: '86%' },
+                { label: 'Labyrinth',       value: 64, display: '64%' },
+                { label: 'Odd Gorilla',     value: 58, display: '58%' },
+                { label: 'House of Zeus',   value: 91, display: '91%' },
+              ]}
+              max={100}
+              threshold={80}
+              warnAt={70}
+              asPercent
+            />
+          </ZuiSectionCard>
+
+          <ZuiSectionCard title="Pipeline funnel" subtitle="Deal count by stage">
+            <ZuiHbars
+              rows={[
+                { label: 'Qualified',   value: 48 },
+                { label: 'Proposed',    value: 32 },
+                { label: 'Negotiating', value: 18 },
+                { label: 'Won',         value: 12 },
+              ]}
+            />
+          </ZuiSectionCard>
+        </div>
+      </Section>
+
+      {/* 5. DataTable + Drawer */}
+      <Section title="DataTable — filter + sort + brand-edge rows + drawer">
+        <ZuiDataTable<IwoDemoRow>
+          rows={ZUI_IWOS}
+          columns={ZUI_IWO_COLUMNS}
+          search="Search IWO, client, owner…"
+          filters={[
+            {
+              key: 'brand',
+              label: 'Brand',
+              options: [
+                'All',
+                'Zeus The Agency',
+                'Zeus Digital',
+                'Labyrinth',
+                'Odd Gorilla',
+                'House of Zeus',
+              ],
+            },
+            {
+              key: 'stage',
+              label: 'Stage',
+              options: ['All', 'Waiting', 'In flight', 'ECD review', 'Overheating'],
+            },
+          ]}
+          rowBrandEdge={(r) => r.brand}
+          onRowClick={(r) => setDrawerRow(r)}
+        />
+      </Section>
+
+      {/* 6. Sparkline, cells atoms */}
+      <Section title="Cell atoms — brand chip · person chip · RAG badge · sparkline">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <ZuiSectionCard title="Chips & badges">
+            <div className="flex flex-wrap items-center gap-3">
+              <ZuiBrandChip id="zeus-the-agency" />
+              <ZuiBrandChip id="zeus-digital" full />
+              <ZuiBrandChip id="labyrinth" />
+              <ZuiBrandChip id="odd-gorilla" />
+              <ZuiBrandChip id="house-of-zeus" full />
+            </div>
+            <div className="h-3" />
+            <div className="flex flex-wrap items-center gap-3">
+              <ZuiRagBadge tone="green" label="On track" />
+              <ZuiRagBadge tone="amber" label="At risk" />
+              <ZuiRagBadge tone="red"   label="Overdue" />
+              <ZuiRagBadge tone="blue"  label="Waiting" />
+              <ZuiRagBadge tone="na"    label="Hold" />
+            </div>
+            <div className="h-3" />
+            <div className="flex flex-wrap items-center gap-4">
+              <ZuiPersonChip name="Amina Wanjiru" />
+              <ZuiPersonChip name="Jon Mutuku" />
+              <ZuiPersonChip name="Faith Nabulime" />
+            </div>
+          </ZuiSectionCard>
+
+          <ZuiSectionCard title="Sparkline (standalone)" subtitle="120×36 SVG, no deps">
+            <div className="flex items-center gap-6">
+              <div style={{ width: 160, height: 44 }}>
+                <ZuiSparkline
+                  points={[10, 14, 11, 18, 22, 19, 26, 24, 31, 29, 34]}
+                  color="var(--zeus-navy)"
+                />
+              </div>
+              <div style={{ width: 160, height: 44 }}>
+                <ZuiSparkline
+                  points={[42, 41, 43, 40, 38, 36, 37, 35, 34, 32, 30]}
+                  color="var(--rag-red)"
+                />
+              </div>
+              <div style={{ width: 160, height: 44 }}>
+                <ZuiSparkline
+                  points={[20, 22, 21, 24, 24, 25, 27, 28, 28, 30, 31]}
+                  color="var(--rag-green)"
+                />
+              </div>
+            </div>
+          </ZuiSectionCard>
+        </div>
+      </Section>
+
+      <ZuiDrawer
+        open={!!drawerRow}
+        onClose={() => setDrawerRow(null)}
+        title={drawerRow ? drawerRow.code : ''}
+        subtitle={drawerRow ? `${drawerRow.client} · ${drawerRow.owner}` : undefined}
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setDrawerRow(null)}>
+              Close
+            </Button>
+            <Button size="sm">Open workspace</Button>
+          </>
+        }
+      >
+        {drawerRow && (
+          <div className="flex flex-col gap-4 text-[12.5px]">
+            <div>
+              <div className="zui-eyebrow mb-1">Brand</div>
+              <ZuiBrandChip id={drawerRow.brand} full />
+            </div>
+            <div>
+              <div className="zui-eyebrow mb-1">Stage</div>
+              <ZuiRagBadge
+                tone={ZUI_STAGE_MAP[drawerRow.stage].tone}
+                label={ZUI_STAGE_MAP[drawerRow.stage].label}
+              />
+            </div>
+            <div>
+              <div className="zui-eyebrow mb-1">Burn vs budget</div>
+              <ZuiHbars
+                rows={[{ label: 'Spend', value: drawerRow.burn, display: `${drawerRow.burn}%` }]}
+                max={100}
+                threshold={80}
+                warnAt={70}
+                asPercent
+              />
+            </div>
+            <div>
+              <div className="zui-eyebrow mb-1">Budget</div>
+              <span className="zui-money">{drawerRow.budget}</span>
+            </div>
+            <div>
+              <div className="zui-eyebrow mb-1">Due</div>
+              <span>{drawerRow.dueIn}</span>
+            </div>
+          </div>
+        )}
+      </ZuiDrawer>
     </div>
   );
 }

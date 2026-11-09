@@ -1,3 +1,8 @@
+/* Zeus-UI — DawinOS soft-skin primitives (KPIRow, DataTable, Banner,
+   Drawer, ModuleHeader, Hbars). Opt-in; see src/shared/components/zeus-ui.
+   `@import` must precede every other statement per CSS spec. */
+@import './shared/components/zeus-ui/zeus-ui.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,9 +22,9 @@
   --bg-app: #f6f5f2;
   --bg-surface: #ffffff;
   --bg-sunken: #efede8;
-  --bg-sidebar: #1a1a1c;            /* Sleek near-black (DawinOS spec §2.1) */
-  --bg-sidebar-hover: #26262a;
-  --bg-sidebar-active: #2f2f33;
+  --bg-sidebar: #0a1424;            /* Zeus navy-ink — ZeusOS shell */
+  --bg-sidebar-hover: #141f3a;
+  --bg-sidebar-active: #1c2d55;
 
   /* ---- Foreground ---- */
   --fg-primary: #0a1f4a;             /* Zeus deep navy on light */
