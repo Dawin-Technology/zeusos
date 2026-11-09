@@ -166,10 +166,19 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
+      - name: Install functions dependencies
+        # memoLockstep.test.ts uses createRequire to pull in
+        # functions/src/memos/lib/memoTasks.js, which requires
+        # firebase-functions at module load. That package lives only
+        # under functions/node_modules — install it so the lockstep
+        # test can resolve it. NODE_PATH points Node at that tree.
+        run: npm ci --prefix functions
+
       - name: Run unit tests
         run: npm run test:unit -- --run --coverage
         env:
           CI: true
+          NODE_PATH: functions/node_modules
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
