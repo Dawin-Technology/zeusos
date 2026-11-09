@@ -85,7 +85,12 @@ jobs:
   # ───────────────────────────────────────────────────────────────────────────
   e2e-lifecycle:
     name: Playwright — quote lifecycle (advisory)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest rolled to 26.04, which Playwright 1.57 can't
+    # install chromium on ("ERROR: Playwright does not support chromium
+    # on ubuntu26.04-x64"). The real fix (bump Playwright, or pin here
+    # long-term) lives in PR #186; this mirrors its pin so PR #185's CI
+    # goes green without waiting on that merge.
+    runs-on: ubuntu-24.04
     continue-on-error: true
     # Advisory job — but must not burn the full 6h GH max-duration if
     # the emulator stack or seed script wedges. A clean green run is
