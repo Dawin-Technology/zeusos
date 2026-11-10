@@ -12,14 +12,10 @@ import {
   LogOut,
   User,
   Check,
-  Star,
   LucideIcon,
   Building2,
   Settings,
-  PanelLeftOpen,
-  PanelLeftClose,
   ChevronRight,
-  ChevronDown,
   Palette,
   Plus,
   Briefcase,
@@ -32,12 +28,6 @@ import {
 } from 'lucide-react';
 import { getIconByName } from '@/shared/utils/iconMap';
 import { Button } from '@/core/components/ui/button';
-import { ScrollArea } from '@/core/components/ui/scroll-area';
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '@/core/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,7 +61,6 @@ import {
   type NavItem,
 } from '@/config/navigation.unified';
 import { adaptManifestToLegacyNavItem, resolveNav, type NavStatus } from '@/core/navigation/manifest';
-import { isConflictIsolated } from '@/core/settings/brand-capabilities';
 import { isParentOrgPrincipal as resolveIsParentOrgPrincipal } from '@/core/settings/org-kind';
 import type { SubsidiaryId } from '@/core/settings/types';
 import { useUserModules } from '@/hooks/useUserModules';
@@ -82,6 +71,7 @@ import { useBranding } from '@/shared/hooks/useBranding';
 // TODO Phase 4: rebuild client comms (WhatsApp/Slack) for marketing-agency context.
 import { GroupNavPills } from '@/core/components/layout/GroupNavPills';
 import { PreferencesMenu } from '@/core/components/layout/PreferencesMenu';
+import { SoftSidebarRail, type SoftSidebarRailSection } from '@/core/components/layout/SoftSidebarRail';
 import { useGlobalShortcuts } from '@/shared/hooks/useGlobalShortcuts';
 
 // Flat legacy-NavItem lookup used by the manifest adapter so we keep
@@ -201,7 +191,7 @@ function AppShellFrame({ children }: AppShellProps) {
   const actionQueue = useActionQueue();
   const { approvalsCount } = actionQueue;
   const { allAccessibleModuleIds, isAdmin: isModuleAdmin, isSuperUser } = useUserModules();
-  const { sidebarOpen, toggleSidebar, sidebarAutoClose, sidebarCollapsed, toggleSidebarCollapsed, direction, navScope, setNavScope } = useUIStore();
+  const { sidebarOpen, toggleSidebar, sidebarAutoClose, sidebarCollapsed, toggleSidebarCollapsed, navScope } = useUIStore();
   const { currentSubsidiary, subsidiaries, setCurrentSubsidiary } = useSubsidiary();
   const { 
     favoriteItems, 
@@ -250,6 +240,31 @@ function AppShellFrame({ children }: AppShellProps) {
     const brandId = currentSubsidiary?.id || 'zeus-group';
     document.documentElement.setAttribute('data-brand', brandId);
   }, [currentSubsidiary?.id]);
+
+  // PR 1b — mirror the active density onto <html data-density>. The soft-skin
+  // CSS tightens topbar/rail/table padding under `[data-density="dense"]` and
+  // loosens under `[data-density="airy"]`; the shadcn primitives ignore it.
+  const density = useUIStore((s) => s.density);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-density', density);
+  }, [density]);
+
+  // PR 1b — resolve the "system" theme to the current OS preference and mirror
+  // it onto <html data-theme>. Soft-skin dark tokens hang off that attribute,
+  // so switching between light/dark/system swaps the whole canvas without the
+  // legacy sidebar vars (`--bg-sidebar`) being touched.
+  const theme = useUIStore((s) => s.theme);
+  useEffect(() => {
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const resolve = () => {
+      const resolved = theme === 'system' ? (mql.matches ? 'dark' : 'light') : theme;
+      document.documentElement.setAttribute('data-theme', resolved);
+    };
+    resolve();
+    if (theme !== 'system') return;
+    mql.addEventListener('change', resolve);
+    return () => mql.removeEventListener('change', resolve);
+  }, [theme]);
 
   // Unread conversations, for the rail's door and its Messages segment.
   const { teamUnread: totalMessagingUnread } = useTeamChannels();
@@ -393,11 +408,6 @@ function AppShellFrame({ children }: AppShellProps) {
       (it) => ((it as { status?: NavStatus }).status ?? 'live') === 'live',
     );
   }, [mainNavItems, navScope]);
-  const hasPlanned = useMemo(
-    () => mainNavItems.some((it) => (it as { status?: NavStatus }).status === 'planned'),
-    [mainNavItems],
-  );
-
   // Corporate modules filtered by access (header pills)
   const corporateNavItems = useMemo(() => {
     return filterNavigationByAccess(CORPORATE_NAVIGATION, allAccessibleModuleIds, isPrivileged);
@@ -430,6 +440,17 @@ function AppShellFrame({ children }: AppShellProps) {
 
   // Command palette items
   const commandItems = useMemo(() => getAllCommandItems(), []);
+
+  // PR 1b — group the resolved manifest for the soft rail. Expanded mode
+  // shows section eyebrows above each group, matching the old aside's layout.
+  const railSections = useMemo<SoftSidebarRailSection[]>(() => {
+    return SECTION_ORDER.map((section) => {
+      const items = scopedNavItems.filter(
+        (it: NavItem) => (SECTION_FOR_MODULE[it.id] || 'work') === section,
+      );
+      return { id: section, label: SECTION_LABELS[section] ?? section, items };
+    }).filter((s) => s.items.length > 0);
+  }, [scopedNavItems]);
 
   // Global G+letter shortcuts (Strategy/HR/Finance/Capital/Compliance/Market Intel)
   useGlobalShortcuts();
@@ -500,172 +521,6 @@ function AppShellFrame({ children }: AppShellProps) {
     navigate('/');
   };
 
-  // Popover flyout for collapsed sidebar icons
-  const NavItemPopover = ({ item, children: trigger }: { item: NavItem; children: React.ReactNode }) => {
-    const [open, setOpen] = React.useState(false);
-    const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const handleEnter = () => {
-      if (closeTimer.current) clearTimeout(closeTimer.current);
-      setOpen(true);
-    };
-    const handleLeave = () => {
-      closeTimer.current = setTimeout(() => setOpen(false), 150);
-    };
-
-    const hasChildren = item.children && item.children.length > 0;
-
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <div onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-            {trigger}
-          </div>
-        </PopoverTrigger>
-        <PopoverContent
-          side="right"
-          align="start"
-          sideOffset={8}
-          className="w-52 p-2 z-[70]"
-          onMouseEnter={handleEnter}
-          onMouseLeave={handleLeave}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
-          <Link
-            to={item.href}
-            onClick={() => setOpen(false)}
-            className="block px-2 py-1.5 text-sm font-semibold hover:bg-muted rounded-md"
-          >
-            {item.label}
-          </Link>
-          {hasChildren && (
-            <>
-              <div className="h-px bg-border my-1" />
-              <div className="space-y-0.5">
-                {item.children!.map((child: NavItem) => {
-                  const ChildIcon = getIcon(child.icon);
-                  const childActive = isActive(child.href);
-                  return (
-                    <Link
-                      key={child.id}
-                      to={child.href}
-                      onClick={() => setOpen(false)}
-                      className={cn(
-                        'flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors',
-                        childActive
-                          ? 'bg-muted font-medium text-foreground'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      )}
-                    >
-                      {ChildIcon && <ChildIcon className="h-3.5 w-3.5" />}
-                      <span>{child.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </PopoverContent>
-      </Popover>
-    );
-  };
-
-  const renderNavItem = (item: NavItem) => {
-    const active = isActive(item.href);
-    const isFavorite = favoriteItems.includes(item.id);
-    const IconComponent = getIcon(item.icon);
-    // Check if any child is active (for parent highlight in collapsed mode)
-    const hasActiveChild = item.children?.some((child: NavItem) => isActive(child.href));
-    const isHighlighted = active || hasActiveChild;
-    // UI Refresh v3 — roadmap status. `planned` items render dimmed with a
-    // hollow-dot marker (only reachable when navScope === 'roadmap').
-    const planned = (item as { status?: NavStatus }).status === 'planned';
-
-    // Collapsed rail mode (desktop only): show icon-only with popover flyout
-    if (!sidebarExpanded) {
-      return (
-        <div key={item.id} style={planned ? { opacity: 0.8 } : undefined}>
-          <NavItemPopover item={item}>
-            <Link
-              to={item.href}
-              className={cn(
-                'flex items-center justify-center w-full h-9 rounded-md transition-colors',
-                isHighlighted
-                  ? 'bg-[var(--bg-sidebar-active)] text-[var(--fg-on-dark)]'
-                  : 'text-[var(--fg-on-dark-muted)] hover:bg-[var(--bg-sidebar-hover)] hover:text-[var(--fg-on-dark)]'
-              )}
-              onClick={() => {
-                if (sidebarAutoClose && window.innerWidth < 1024) {
-                  setTimeout(() => toggleSidebar(), 100);
-                }
-              }}
-            >
-              {IconComponent && <IconComponent className="h-4 w-4" />}
-            </Link>
-          </NavItemPopover>
-        </div>
-      );
-    }
-
-    return (
-      <div key={item.id} style={planned ? { opacity: 0.8 } : undefined}>
-        <div
-          className={cn(
-            'group relative flex items-center gap-3 px-2.5 h-8 rounded-md text-[13px] transition-colors cursor-pointer select-none',
-            isHighlighted
-              ? 'bg-[var(--bg-sidebar-active)] text-[var(--fg-on-dark)] font-medium'
-              : 'text-[var(--fg-on-dark)] hover:bg-[var(--bg-sidebar-hover)]'
-          )}
-        >
-          {isHighlighted && direction === 'ambitious' && (
-            <span
-              className="absolute left-0 rounded-full"
-              style={{ top: 6, bottom: 6, width: 3, background: 'var(--brand-accent)' }}
-            />
-          )}
-          <Link
-            to={item.href}
-            className="flex items-center gap-3 flex-1 min-w-0"
-            onClick={() => {
-              if (sidebarAutoClose && window.innerWidth < 1024) {
-                setTimeout(() => toggleSidebar(), 100);
-              }
-            }}
-          >
-            {IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />}
-            <span className="truncate">{item.label}</span>
-            {planned && (
-              <span
-                className="ml-auto h-1.5 w-1.5 rounded-full border border-[var(--fg-on-dark-muted)] flex-none"
-                title="Planned — not yet deployed"
-                aria-label="Planned"
-              />
-            )}
-            {item.badge && (
-              <span className={cn('text-[10px] bg-[var(--bg-sidebar-hover)] text-[var(--fg-on-dark)] px-1.5 py-0.5 rounded', !planned && 'ml-auto')}>
-                {item.badge}
-              </span>
-            )}
-          </Link>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              isFavorite ? removeFavorite(item.id) : addFavorite(item.id);
-            }}
-            className={cn(
-              'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0',
-              isFavorite
-                ? 'text-[var(--rag-amber)] opacity-100'
-                : 'text-[var(--fg-on-dark-muted)] hover:text-[var(--rag-amber)]'
-            )}
-          >
-            <Star className={cn('h-3 w-3', isFavorite && 'fill-current')} />
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   // Render corporate nav item for header dropdown
   const renderCorporateMenuItem = (item: NavItem) => {
@@ -702,7 +557,7 @@ function AppShellFrame({ children }: AppShellProps) {
         className={cn(
           'hidden lg:flex sticky top-0 z-40 flex-col transition-shadow duration-200',
           'border-b border-[var(--border-default)] bg-[var(--bg-surface)]',
-          sidebarExpanded ? 'lg:pl-[16.5rem]' : 'lg:pl-[5.5rem]',
+          sidebarExpanded ? 'lg:pl-[248px]' : 'lg:pl-[88px]',
           isScrolled && 'shadow-[var(--shadow-sm)]'
         )}
         style={{ boxShadow: 'inset 0 -2px 0 var(--zeus-red)' }}
@@ -979,280 +834,39 @@ function AppShellFrame({ children }: AppShellProps) {
       </header>
 
       <div className="flex flex-1">
-        {/* Sidebar — dark-themed per portal redesign. Full-height on
-            desktop (lg:top-0 + lg:h-screen), slides in below mobile
-            header on small screens. z-[60] sits above the desktop
-            header (z-40) so the sidebar visually covers the header's
-            left gutter; the header has lg:pl-[16.5rem]/[5.5rem] so its
-            content starts to the right of the sidebar regardless. */}
-        <aside
-          className={cn(
-            'fixed left-0 z-[60] border-r',
-            'top-14 bottom-0', // Mobile: below header
-            'lg:fixed lg:top-0 lg:h-screen lg:bottom-auto lg:translate-x-0',
-            // Mobile: slide in/out
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-            'transition-all duration-300 ease-in-out',
-            // Desktop: collapsed rail (w-16) or expanded (w-60)
-            sidebarExpanded ? 'w-60' : 'lg:w-16 w-60',
-            'flex flex-col'
-          )}
-          style={{
-            backgroundColor: 'var(--bg-sidebar)',
-            color: 'var(--fg-on-dark)',
-            borderRightColor: 'var(--border-on-dark)',
+        {/* PR 1b — soft 72px icon rail. See SoftSidebarRail.tsx. The rail
+            is `position: fixed` so the surrounding `<main>` only needs a
+            left margin to clear the rail's own width. Mobile collapses
+            the rail into a slide-in drawer via `mobileOpen` + the scrim
+            the rail renders itself. */}
+        <SoftSidebarRail
+          sections={railSections}
+          expanded={!sidebarCollapsed}
+          onToggleExpanded={toggleSidebarCollapsed}
+          mobileOpen={sidebarOpen}
+          onMobileClose={() => sidebarOpen && toggleSidebar()}
+          subsidiaries={subsidiaries}
+          currentSubsidiary={currentSubsidiary}
+          isParentRoot={isParentRoot}
+          onSelectSubsidiary={handleSubsidiarySwitch}
+          user={{
+            initials: userInitials,
+            displayName: user?.displayName,
+            email: user?.email,
+            roleLabel: userRoleLabel,
           }}
-        >
-          {/* UI refresh — wordmark + sub-brand accent bar */}
-          <div className={cn(
-            'flex items-center gap-2 pt-4 pb-1',
-            sidebarExpanded ? 'px-5' : 'lg:px-0 lg:justify-center px-5'
-          )}>
-            <span
-              className="inline-flex items-center justify-center rounded-[5px] font-extrabold flex-none"
-              style={{
-                width: 22, height: 22, fontSize: 12, letterSpacing: '-0.01em',
-                background: direction === 'ambitious' ? 'var(--brand-accent)' : 'var(--zeus-red)',
-                color: direction === 'ambitious' ? 'var(--brand-accent-fg)' : '#fff',
-              }}
-            >Z</span>
-            {sidebarExpanded && (
-              <span className="font-bold text-[14.5px] tracking-[-0.01em] text-[var(--fg-on-dark)]">ZeusOS</span>
-            )}
-          </div>
-          {direction === 'ambitious' && sidebarExpanded && (
-            <div
-              className="rounded-full"
-              style={{ height: 3, margin: '8px 20px 0', background: 'var(--brand-accent)', opacity: 0.85 }}
-            />
-          )}
+          adminEnabled={adminNavItems.length > 0}
+          onSignOut={signOut}
+          isDesktop={isDesktop}
+        />
 
-          {/* UI refresh — org switcher chip (relocated from the header) */}
-          <div className={cn('pt-2.5 pb-1', sidebarExpanded ? 'px-3.5' : 'lg:px-2 px-3.5')}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    'flex items-center rounded-[10px] text-left border border-white/[0.06] transition-colors',
-                    'bg-[var(--bg-sidebar-hover)] hover:bg-[var(--bg-sidebar-active)]',
-                    sidebarExpanded ? 'w-full gap-2.5 px-2.5 py-2' : 'justify-center p-1.5'
-                  )}
-                  aria-label="Switch organisation"
-                >
-                  <span
-                    className="inline-flex items-center justify-center rounded-lg font-bold flex-none"
-                    style={{
-                      width: 30, height: 30, fontSize: 11, letterSpacing: '0.04em',
-                      background: 'var(--brand-accent)', color: 'var(--brand-accent-fg)',
-                      boxShadow: direction === 'ambitious' ? '0 0 0 2px color-mix(in srgb, var(--brand-accent) 30%, transparent)' : 'none',
-                    }}
-                  >
-                    {currentSubsidiary?.shortName ?? 'ZG'}
-                  </span>
-                  {sidebarExpanded && (
-                    <>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-semibold leading-tight text-[var(--fg-on-dark)] truncate">
-                          {subsidiaryName}
-                        </span>
-                        <span className="block text-[10.5px] uppercase tracking-[0.08em] text-[var(--fg-on-dark-muted)] mt-0.5">
-                          {isParentRoot ? 'Parent · Zeus Group' : 'Subsidiary'}
-                        </span>
-                      </span>
-                      <ChevronDown className="h-3.5 w-3.5 text-[var(--fg-on-dark-muted)] flex-none" />
-                    </>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56" style={{ zIndex: 70 }}>
-                <div className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
-                  Switch organisation
-                </div>
-                {subsidiaries.filter((s) => s.status === 'active').map((sub) => (
-                  <DropdownMenuItem
-                    key={sub.id}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSubsidiarySwitch(sub); }}
-                    className="gap-2.5 cursor-pointer"
-                  >
-                    <span
-                      className="rounded flex-none"
-                      style={{
-                        width: 18, height: 18, background: sub.color,
-                        border: currentSubsidiary?.id === sub.id ? '2px solid var(--fg-primary)' : 'none',
-                      }}
-                    />
-                    <span className="flex-1 truncate">{sub.name}</span>
-                    {isConflictIsolated(sub.id as SubsidiaryId) && (
-                      <span
-                        className="text-[9.5px] uppercase tracking-[0.06em] px-1.5 py-0.5 rounded-full"
-                        style={{ background: 'rgba(230,91,102,0.18)', color: '#cf4b54' }}
-                      >
-                        Isolated
-                      </span>
-                    )}
-                    {currentSubsidiary?.id === sub.id && <Check className="h-3.5 w-3.5 flex-none" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Toggle button - desktop only */}
-          <div className={cn(
-            'hidden lg:flex items-center border-b border-[var(--border-on-dark)] px-2 py-2',
-            sidebarExpanded ? 'justify-end' : 'justify-center'
-          )}>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebarCollapsed}
-              className="h-7 w-7 text-[var(--fg-on-dark-muted)] hover:text-[var(--fg-on-dark)] hover:bg-[var(--bg-sidebar-hover)]"
-              title={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
-            >
-              {sidebarExpanded ? (
-                <PanelLeftClose className="h-4 w-4" />
-              ) : (
-                <PanelLeftOpen className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-
-          <ScrollArea className="flex-1">
-            <div className={cn('p-3', !sidebarExpanded && 'lg:px-2')}>
-              {/* Phase 6.UI.0 — single resolved manifest. UI refresh groups
-                  the resolved items into eyebrow-labelled sections (Today /
-                  Commercial / Delivery / Operations / System) via
-                  SECTION_FOR_MODULE when expanded; the collapsed rail keeps
-                  a flat icon list. */}
-              {sidebarExpanded
-                ? SECTION_ORDER.map((section) => {
-                    const items = scopedNavItems.filter(
-                      (it: NavItem) => (SECTION_FOR_MODULE[it.id] || 'work') === section
-                    );
-                    if (items.length === 0) return null;
-                    return (
-                      <div key={section} className="mb-3">
-                        <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--fg-on-dark-muted)]">
-                          {SECTION_LABELS[section] || section}
-                        </div>
-                        <div className="space-y-px">
-                          {items.map((item: NavItem) => renderNavItem(item))}
-                        </div>
-                      </div>
-                    );
-                  })
-                : <div className="space-y-1">{scopedNavItems.map((item: NavItem) => renderNavItem(item))}</div>}
-
-              {/* UI Refresh v3 — roadmap legend + scope toggle. Only shown
-                  (expanded) when the resolved nav actually carries a planned
-                  item, so deployed-only orgs see no clutter. */}
-              {sidebarExpanded && hasPlanned && (
-                <div className="mt-3 px-3 pt-3 border-t border-[var(--border-on-dark)]">
-                  <div className="flex items-center gap-3 text-[10px] text-[var(--fg-on-dark-muted)]">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--fg-on-dark)]" /> Live
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full border border-[var(--fg-on-dark-muted)]" /> Planned
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setNavScope(navScope === 'roadmap' ? 'deployed' : 'roadmap')}
-                      className="ml-auto text-[10px] text-[var(--fg-on-dark-muted)] hover:text-[var(--fg-on-dark)] transition-colors"
-                      title={navScope === 'roadmap' ? 'Hide planned modules' : 'Show full roadmap'}
-                    >
-                      {navScope === 'roadmap' ? 'Deployed only' : 'Full roadmap'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-
-          {/* UI refresh — user footer card (relocated from the header) */}
-          <div className={cn('mt-auto', sidebarExpanded ? 'm-2.5' : 'lg:mx-1.5 lg:my-2 m-2.5')}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    'flex items-center rounded-[10px] text-left bg-white/[0.04] hover:bg-white/[0.07] transition-colors',
-                    sidebarExpanded ? 'w-full gap-2.5 p-2.5' : 'justify-center p-1.5'
-                  )}
-                  aria-label="Account menu"
-                >
-                  <span
-                    className="inline-flex items-center justify-center rounded-full text-[11px] font-semibold text-white flex-none"
-                    style={{ width: 28, height: 28, background: 'linear-gradient(135deg, #e63946, #b8222e)' }}
-                  >
-                    {userInitials}
-                  </span>
-                  {sidebarExpanded && (
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[12.5px] font-semibold leading-tight text-[var(--fg-on-dark)] truncate">
-                        {user?.displayName || 'User'}
-                      </span>
-                      <span className="block text-[10.5px] text-[var(--fg-on-dark-muted)] mt-0.5 truncate">
-                        {userRoleLabel}
-                      </span>
-                    </span>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" side="top" className="w-56">
-                <div className="px-2 py-1.5">
-                  <div className="text-[13px] font-medium text-[var(--fg-primary)] truncate">
-                    {user?.displayName || 'User'}
-                  </div>
-                  <div className="text-[11px] text-[var(--fg-tertiary)] truncate">{user?.email}</div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/profile">
-                    <User className="mr-2 h-3.5 w-3.5" /> Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/settings/appearance">
-                    <Palette className="mr-2 h-3.5 w-3.5" /> Appearance
-                  </Link>
-                </DropdownMenuItem>
-                {adminNavItems.length > 0 && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin">
-                      <Settings className="mr-2 h-3.5 w-3.5" /> Admin
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                <PreferencesMenu />
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => signOut()}
-                  data-testid="logout-button"
-                  className="text-[var(--rag-red)] focus:text-[var(--rag-red)]"
-                >
-                  <LogOut className="mr-2 h-3.5 w-3.5" /> Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </aside>
-
-        {/* Mobile Overlay */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 top-14 z-[55] bg-black/50 lg:hidden transition-opacity duration-300"
-            onClick={toggleSidebar}
-          />
-        )}
-
-        {/* Main Content. lg:ml-* offsets for the fixed sidebar so content
-            doesn't render under it. */}
+        {/* Main Content. lg:ml-* offsets for the fixed 72px rail
+            (expanded → 232px). The SoftSidebarRail renders its own mobile
+            scrim; no separate overlay here. */}
         <main
           className={cn(
             'flex-1 min-w-0',
-            sidebarExpanded ? 'lg:ml-60' : 'lg:ml-16'
+            sidebarExpanded ? 'lg:ml-[232px]' : 'lg:ml-[72px]'
           )}
           style={railOpen && railMode === 'push' ? { marginRight: 'var(--rail-w)' } : undefined}
         >

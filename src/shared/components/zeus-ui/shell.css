@@ -336,3 +336,521 @@
     0 0 0 2px var(--bg-surface),
     0 0 0 4px var(--border-default);
 }
+
+/* ============================================================
+   Soft-skin 72px icon rail (PR 1b).
+   Sits transparent on the canvas: the rail is NOT a dark chrome
+   anymore, individual items are `.nav-item` rounded surfaces that
+   float above the page background. When the user expands the
+   rail via the toggle, labels appear inline next to each icon
+   (the label pill still renders on hover in collapsed mode).
+   ============================================================ */
+
+/* The outer rail — 72px when collapsed, 232px when expanded.
+   `[data-expanded="true"]` is set by SoftSidebarRail on the aside. */
+[data-skin="soft"] .zeus-rail {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 12px;
+  background: transparent;
+  color: var(--fg-secondary);
+  border-right: 0;
+  z-index: 60;
+  transition: width 220ms cubic-bezier(.3,.8,.2,1);
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] { width: 232px; }
+
+/* Hide-on-mobile, show on desktop; respect the existing mobile drawer
+   behavior by letting AppShell add `data-mobile-open="true"` to force
+   the rail visible as a slide-in sheet on small screens. */
+@media (max-width: 1023px) {
+  [data-skin="soft"] .zeus-rail { width: 240px; transform: translateX(-100%); box-shadow: var(--shadow-lg); background: var(--bg-surface); }
+  [data-skin="soft"] .zeus-rail[data-mobile-open="true"] { transform: translateX(0); }
+}
+
+/* Brand chip at top of the rail */
+[data-skin="soft"] .zeus-rail-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  padding: 4px 0 10px;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-brand {
+  justify-content: flex-start;
+  padding: 4px 16px 10px;
+}
+[data-skin="soft"] .zeus-rail-brand .logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 700 13px var(--font-sans);
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #872e5c 0%, #e18425 100%);
+  color: #fff;
+  flex-shrink: 0;
+}
+[data-skin="soft"] .zeus-rail-brand .name {
+  display: none;
+  min-width: 0;
+  line-height: 1.2;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-brand .name { display: block; }
+[data-skin="soft"] .zeus-rail-brand .name b {
+  display: block;
+  font: 600 14px/1.2 var(--font-sans);
+  letter-spacing: -0.015em;
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .zeus-rail-brand .name span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--fg-tertiary);
+  margin-top: 2px;
+}
+
+/* Org switcher chip — brand dot only when collapsed, labeled when expanded */
+[data-skin="soft"] .zeus-rail-org {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 44px;
+  height: 44px;
+  margin: 2px auto 8px;
+  border: 0;
+  background: var(--bg-surface);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  color: var(--fg-primary);
+  transition: background 160ms, box-shadow 160ms;
+  flex-shrink: 0;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-org {
+  width: calc(100% - 20px);
+  margin: 2px 10px 10px;
+  border-radius: 999px;
+  padding: 0 6px 0 10px;
+  justify-content: flex-start;
+  height: 40px;
+}
+[data-skin="soft"] .zeus-rail-org:hover {
+  background: #f3f1ed;
+  box-shadow: 0 2px 6px rgba(20,20,22,.1);
+}
+[data-skin="soft"] .zeus-rail-org .dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font: 700 9px var(--font-sans);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  background: var(--brand-accent, var(--zeus-navy));
+}
+[data-skin="soft"] .zeus-rail-org .label {
+  display: none;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-org .label { display: block; }
+[data-skin="soft"] .zeus-rail-org .chev {
+  display: none;
+  flex-shrink: 0;
+  color: var(--fg-tertiary);
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-org .chev { display: inline-flex; }
+
+/* Nav scroll region. `overflow-y: auto` clips the x axis per CSS spec,
+   which would eat the hover pills — so the collapsed rail uses a Radix
+   Tooltip rendered through a portal instead of an in-DOM `.rail-label`
+   (see SoftSidebarRail.tsx). The in-DOM `.rail-label` stays as a fallback
+   for ambient browsers that don't mount the portal. */
+[data-skin="soft"] .zeus-rail-nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  scrollbar-width: none;
+  min-height: 0;
+}
+[data-skin="soft"] .zeus-rail-nav::-webkit-scrollbar { display: none; }
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-nav {
+  align-items: stretch;
+  padding: 2px 10px 8px;
+}
+
+/* Nav item — circular icon surface, hover reveals a label pill */
+[data-skin="soft"] .zeus-rail-item {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  color: var(--fg-secondary);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 1px 1px rgba(20,20,22,.05);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: box-shadow 180ms, background 160ms, color 160ms, transform 180ms;
+  cursor: pointer;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-item {
+  width: 100%;
+  height: 36px;
+  border-radius: 999px;
+  justify-content: flex-start;
+  padding: 0 12px;
+  gap: 10px;
+  box-shadow: none;
+  background: transparent;
+}
+[data-skin="soft"] .zeus-rail-item:hover,
+[data-skin="soft"] .zeus-rail-item:focus-visible {
+  color: var(--fg-primary);
+  box-shadow: 0 6px 14px rgba(20,20,22,.14);
+  outline: none;
+  z-index: 2;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-item:hover,
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-item:focus-visible {
+  background: var(--bg-surface);
+  box-shadow: 0 1px 2px rgba(20,20,22,.06);
+}
+[data-skin="soft"] .zeus-rail-item.active {
+  background: var(--fg-primary);
+  color: var(--bg-surface);
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-item.active {
+  background: var(--fg-primary);
+  color: var(--bg-surface);
+  box-shadow: 0 2px 8px rgba(10,31,74,0.18);
+}
+[data-skin="soft"] .zeus-rail-item:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg-app), 0 0 0 4px var(--accent);
+}
+[data-skin="soft"] .zeus-rail-item .icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  flex-shrink: 0;
+  transition: transform 200ms;
+}
+[data-skin="soft"] .zeus-rail-item:hover .icon { transform: scale(1.06); }
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-item .icon { transform: none; }
+
+/* Inline label (expanded mode) */
+[data-skin="soft"] .zeus-rail-item .inline-label {
+  display: none;
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-item .inline-label { display: inline; }
+
+/* Badge dot (planned/badge) */
+[data-skin="soft"] .zeus-rail-item .count {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  font: 600 9px/14px var(--font-sans);
+  text-align: center;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-item .count {
+  position: static;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Section eyebrow (visible only when expanded) */
+[data-skin="soft"] .zeus-rail-eyebrow { display: none; }
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-eyebrow {
+  display: block;
+  padding: 10px 14px 4px;
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+
+/* Footer: toggle + user avatar */
+[data-skin="soft"] .zeus-rail-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border-subtle);
+  margin: 6px 12px 0;
+}
+[data-skin="soft"] .zeus-rail[data-expanded="true"] .zeus-rail-foot {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 4px 0;
+  gap: 8px;
+}
+[data-skin="soft"] .zeus-rail-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg-tertiary);
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 160ms, color 160ms;
+}
+[data-skin="soft"] .zeus-rail-toggle:hover {
+  background: var(--bg-surface);
+  color: var(--fg-primary);
+  box-shadow: 0 2px 6px rgba(20,20,22,.1);
+}
+
+/* User chip in rail footer */
+[data-skin="soft"] .zeus-rail-user {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font: 600 11px var(--font-sans);
+  background: linear-gradient(135deg, #e63946 0%, #b8222e 100%);
+  border: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+[data-skin="soft"] .zeus-rail-user:hover {
+  box-shadow: 0 0 0 2px var(--bg-app), 0 0 0 4px var(--border-default);
+}
+
+/* Reduced-motion: kill rail animations */
+@media (prefers-reduced-motion: reduce) {
+  [data-skin="soft"] .zeus-rail,
+  [data-skin="soft"] .zeus-rail-item,
+  [data-skin="soft"] .zeus-rail-item .rail-label,
+  [data-skin="soft"] .zeus-rail-item .icon {
+    transition: none !important;
+  }
+}
+
+/* Portaled label tooltip for collapsed rail items (Radix). Rendered at the
+   document root so it isn't clipped by the nav's scroll container. */
+[data-skin="soft"] .zeus-rail-tooltip {
+  background: var(--fg-primary);
+  color: var(--bg-surface);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font: 500 12.5px var(--font-sans);
+  letter-spacing: -0.005em;
+  box-shadow: 0 6px 14px rgba(20,20,22,.18);
+  border: 0;
+}
+
+/* Mobile scrim behind the rail-as-sheet */
+[data-skin="soft"] .zeus-rail-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 22, 0.4);
+  z-index: 55;
+}
+@media (max-width: 1023px) {
+  [data-skin="soft"] .zeus-rail-scrim[data-open="true"] { display: block; }
+}
+
+/* ============================================================
+   Density — PR 1b
+   Comfortable (balanced/airy) is default; compact (dense) lowers
+   vertical padding ~25% on shell surfaces.
+   ============================================================ */
+[data-skin="soft"][data-density="dense"] .zeus-rail-item { height: 38px; }
+[data-skin="soft"][data-density="dense"] .zeus-rail[data-expanded="true"] .zeus-rail-item { height: 30px; }
+[data-skin="soft"][data-density="dense"] .zeus-topbar { height: 52px; }
+[data-skin="soft"][data-density="dense"] .zeus-rail-nav { gap: 2px; }
+[data-skin="soft"][data-density="dense"] .zeus-rail-eyebrow { padding: 6px 14px 2px; }
+[data-skin="soft"][data-density="airy"] .zeus-rail-item { height: 48px; }
+[data-skin="soft"][data-density="airy"] .zeus-topbar { height: 66px; }
+[data-skin="soft"][data-density="airy"] .zeus-rail-nav { gap: 8px; }
+
+/* Table rows + card padding under the two density modes */
+[data-skin="soft"][data-density="dense"] .zui-tbl tbody td { height: 32px; padding: 0 10px; }
+[data-skin="soft"][data-density="dense"] .zui-card-head,
+[data-skin="soft"][data-density="dense"] .zui-card-pad { padding: 12px 14px; }
+[data-skin="soft"][data-density="airy"] .zui-tbl tbody td { height: 52px; padding: 0 18px; }
+[data-skin="soft"][data-density="airy"] .zui-card-head,
+[data-skin="soft"][data-density="airy"] .zui-card-pad { padding: 28px; }
+
+/* ============================================================
+   Dark palette — PR 1b
+   Only activates under soft skin + explicit [data-theme="dark"]
+   (resolved from the "System" radio in PreferencesMenu). Leaves
+   the legacy sidebar vars alone — dark here means the whole
+   canvas, not just the aside.
+   ============================================================ */
+[data-skin="soft"][data-theme="dark"] {
+  --bg-app: #0e0e10;
+  --bg-surface: #1c1c1f;
+  --bg-sunken: #232327;
+
+  --fg-primary: #f3f1ec;
+  --fg-secondary: #b8b5bd;
+  --fg-tertiary: #8a8790;
+  --fg-quaternary: #555358;
+
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --accent: #e63946;
+  --accent-soft: rgba(230, 57, 70, 0.18);
+  --accent-fg: #ffffff;
+
+  --shadow-sm: 0 1px 0 rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.45);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.55);
+
+  color-scheme: dark;
+}
+[data-skin="soft"][data-theme="dark"] .zeus-rail-brand .logo {
+  background: linear-gradient(135deg, #a9437a 0%, #e18425 100%);
+}
+[data-skin="soft"][data-theme="dark"] .zeus-rail-item:hover {
+  background: var(--bg-sunken);
+}
+[data-skin="soft"][data-theme="dark"] .group-menu-btn:hover,
+[data-skin="soft"][data-theme="dark"] .zeus-icon-btn:hover,
+[data-skin="soft"][data-theme="dark"] .sub-picker:hover,
+[data-skin="soft"][data-theme="dark"] .kbar-button:hover {
+  background: var(--bg-sunken);
+}
+[data-skin="soft"][data-theme="dark"] body { background: var(--bg-app); color: var(--fg-primary); }
+
+/* ============================================================
+   CommandPalette — soft refresh (PR 1b)
+   Scoped via `.zeus-kbar-dialog` on the Radix DialogContent so
+   the shadcn cascade stays intact for other dialogs.
+   ============================================================ */
+[data-skin="soft"] .zeus-kbar-dialog {
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+[data-skin="soft"] .zeus-kbar-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-skin="soft"] .zeus-kbar-search input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--fg-primary);
+  font: 500 15px var(--font-sans);
+  letter-spacing: -0.01em;
+  outline: none;
+  box-shadow: none;
+}
+[data-skin="soft"] .zeus-kbar-search input::placeholder { color: var(--fg-tertiary); }
+[data-skin="soft"] .zeus-kbar-group-label {
+  padding: 10px 14px 4px;
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+[data-skin="soft"] .zeus-kbar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--fg-primary);
+  background: transparent;
+  width: calc(100% - 8px);
+  margin: 1px 4px;
+  text-align: left;
+  border: 0;
+  cursor: pointer;
+  font: 500 13px var(--font-sans);
+  transition: background 120ms ease;
+}
+[data-skin="soft"] .zeus-kbar-row:hover,
+[data-skin="soft"] .zeus-kbar-row[data-selected="true"] {
+  background: var(--bg-sunken);
+}
+[data-skin="soft"] .zeus-kbar-row .meta {
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  line-height: 1.2;
+}
+[data-skin="soft"] .zeus-kbar-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  border-top: 1px solid var(--border-subtle);
+  background: color-mix(in oklab, var(--bg-surface) 96%, var(--bg-sunken) 4%);
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+}
+[data-skin="soft"] .zeus-kbar-foot kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  font: 500 10px var(--font-mono);
+  color: var(--fg-tertiary);
+}

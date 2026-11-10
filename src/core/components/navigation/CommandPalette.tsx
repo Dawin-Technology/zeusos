@@ -359,30 +359,33 @@ export function CommandPalette({
 
   return (
     <>
-      {/* Trigger Button */}
+      {/* Trigger Button — soft-skin `.kbar-button` (shell.css) already styles
+          the pill; the shadcn utility set stays as a Classic fallback for
+          any surface not under <html data-skin="soft">. */}
       <button
         onClick={() => {
           setMode('default');
           setOpen(true);
         }}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground bg-muted/50 hover:bg-muted rounded-lg border border-border/50 transition-colors"
+        className="kbar-button flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground bg-muted/50 hover:bg-muted rounded-lg border border-border/50 transition-colors"
+        data-testid="command-palette-trigger"
       >
         <Search className="h-4 w-4" />
         <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-background rounded border">
+        <kbd className="kbd hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-background rounded border">
           <Command className="h-3 w-3" />
           <span>K</span>
         </kbd>
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="p-0 gap-0 max-w-xl overflow-hidden" aria-describedby={undefined}>
+        <DialogContent className="zeus-kbar-dialog p-0 gap-0 max-w-xl overflow-hidden" aria-describedby={undefined}>
           <VisuallyHidden.Root>
             <DialogTitle>Command Palette</DialogTitle>
           </VisuallyHidden.Root>
 
           {/* Search Input */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b">
+          <div className="zeus-kbar-search flex items-center gap-3 px-4 py-3 border-b">
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
             <Input
               ref={inputRef}
@@ -536,7 +539,7 @@ export function CommandPalette({
           </ScrollArea>
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/30 text-xs text-muted-foreground">
+          <div className="zeus-kbar-foot flex items-center justify-between px-4 py-2 border-t bg-muted/30 text-xs text-muted-foreground">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
                 <kbd className="px-1 py-0.5 bg-background rounded border text-[10px]">↑</kbd>
@@ -583,8 +586,9 @@ function CommandItemRow({
   return (
     <button
       onClick={onSelect}
+      data-selected={selected ? 'true' : 'false'}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors group',
+        'zeus-kbar-row w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors group',
         selected ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
       )}
     >
