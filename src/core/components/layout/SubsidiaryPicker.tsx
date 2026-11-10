@@ -48,6 +48,10 @@ export function SubsidiaryPicker({ className }: { className?: string }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
+          // Soft-skin `.sub-picker` picks up tokens via shell.css; the base
+          // utility set below is the Classic fallback for any surface that
+          // isn't yet under <html data-skin="soft">.
+          'sub-picker',
           'inline-flex items-center gap-2 h-8 pl-2 pr-2.5 rounded-full',
           'border border-[var(--border-default)] bg-[var(--bg-surface)]',
           'text-[12.5px] font-medium text-[var(--fg-primary)]',
@@ -55,9 +59,10 @@ export function SubsidiaryPicker({ className }: { className?: string }) {
           'focus:ring-2 focus:ring-[var(--accent-soft)]',
           className
         )}
+        data-testid="subsidiary-picker"
       >
         <span
-          className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+          className="dot inline-block h-2.5 w-2.5 rounded-full shrink-0"
           style={{ backgroundColor: currentSubsidiary.color }}
           aria-hidden="true"
         />
