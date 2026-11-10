@@ -7,6 +7,7 @@
    ============================================================ */
 
 @import "./shell.css";
+@import "./kanban/KanbanLayout.css";
 
 /* ---- Card ---- */
 .zui-card {

@@ -2,10 +2,10 @@
  * /clients — list every commercial-core Client with their open MSAs and
  * active SOWs at a glance. Phase 3.D.
  *
- * UI refresh (batch 3a): restyled to the refreshed prototype — PageHero,
- * MSA-status filter chips, and a .tbl card table with primary-brand chip +
- * RAG status pill. Data wiring (subscribeClients + MSA/SOW enrichment) and
- * navigation are unchanged.
+ * Shell re-skin PR 2: a KPI row (soft-skin `.zui-kpi`), the existing
+ * MSA-status chip filters, and the refreshed `.tbl` card with soft
+ * `BrandChip` from zeus-ui. Data wiring (subscribeClients + MSA/SOW
+ * enrichment) and navigation are unchanged.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -21,6 +21,7 @@ import type { MSA } from '@/modules/contracts/types/msa.types';
 import type { SOW } from '@/modules/contracts/types/sow.types';
 import type { SubsidiaryId } from '@/core/settings/types';
 import { PageHero, Pill, type RagTone } from '@/shared/components/refresh';
+import { BrandChip, type SubBrandId } from '@/shared/components/zeus-ui';
 import { formatMinor } from '../utils/money';
 
 interface Row {
@@ -30,15 +31,13 @@ interface Row {
   ceilingByCurrency: Record<string, number>;
 }
 
-// Brand metadata for the primary-brand chip. Accents mirror the Phase 1
-// [data-brand] palette so the swatch matches the rest of the refresh.
-const BRAND_META: Record<SubsidiaryId, { name: string; accent: string }> = {
-  'zeus-group': { name: 'Zeus Group (AM)', accent: '#0a1f4a' },
-  'zeus-the-agency': { name: 'Zeus The Agency', accent: '#f5d900' },
-  'zeus-digital': { name: 'Zeus Digital', accent: '#00c5e5' },
-  labyrinth: { name: 'Labyrinth', accent: '#2f9d5c' },
-  'odd-gorilla': { name: 'Odd Gorilla', accent: '#e65b66' },
-  'house-of-zeus': { name: 'House of Zeus', accent: '#6fa823' },
+const BRAND_ACCENT: Record<SubsidiaryId, string> = {
+  'zeus-group': '#0a1f4a',
+  'zeus-the-agency': '#f5d900',
+  'zeus-digital': '#00c5e5',
+  labyrinth: '#2f9d5c',
+  'odd-gorilla': '#e65b66',
+  'house-of-zeus': '#6fa823',
 };
 
 const STATUS_TONE: Record<ClientStatus, RagTone> = {
@@ -117,6 +116,14 @@ export default function ClientsPage() {
     { key: 'CHURNED', label: 'Churned' },
   ];
 
+  const kpis = useMemo(() => {
+    const active = rows.filter((r) => r.client.status === 'ACTIVE').length;
+    const prospects = rows.filter((r) => r.client.status === 'PROSPECT').length;
+    const openMsaTotal = rows.reduce((s, r) => s + r.openMsas, 0);
+    const activeSowTotal = rows.reduce((s, r) => s + r.activeSows, 0);
+    return { active, prospects, openMsaTotal, activeSowTotal };
+  }, [rows]);
+
   return (
     <div style={{ padding: 'var(--pad-page)' }}>
       <PageHero
@@ -145,7 +152,32 @@ export default function ClientsPage() {
         }
       />
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 20, marginBottom: 14 }}>
+      {!loading && rows.length > 0 && (
+        <div className="zui-kpi-row" style={{ marginBottom: 20 }} data-testid="clients-kpis">
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Active clients</span>
+            <span className="zui-kpi-value">{kpis.active}</span>
+            <span className="zui-kpi-delta">live engagements</span>
+          </div>
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Prospects</span>
+            <span className="zui-kpi-value">{kpis.prospects}</span>
+            <span className="zui-kpi-delta">pre-contract</span>
+          </div>
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Open MSAs</span>
+            <span className="zui-kpi-value">{kpis.openMsaTotal}</span>
+            <span className="zui-kpi-delta">draft or active</span>
+          </div>
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Active SOWs</span>
+            <span className="zui-kpi-value">{kpis.activeSowTotal}</span>
+            <span className="zui-kpi-delta">cross-brand</span>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
         {filterChips.map((f) => (
           <button
             key={f.key}
@@ -190,20 +222,26 @@ export default function ClientsPage() {
             </thead>
             <tbody>
               {visibleRows.map(({ client, openMsas, activeSows, ceilingByCurrency }) => {
-                const brand = BRAND_META[client.primaryBrandId] ?? BRAND_META['zeus-group'];
+                const accent = BRAND_ACCENT[client.primaryBrandId] ?? BRAND_ACCENT['zeus-group'];
                 return (
                   <tr
                     key={client.id}
-                    style={{ cursor: 'pointer', opacity: client.status === 'BLOCKED' ? 0.5 : 1 }}
+                    data-client-id={client.id}
+                    data-testid="client-row"
+                    style={{
+                      cursor: 'pointer',
+                      opacity: client.status === 'BLOCKED' ? 0.5 : 1,
+                      boxShadow: `inset 3px 0 0 ${accent}`,
+                    }}
                     onClick={() => navigate(`/clients/${client.id}`)}
                   >
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span
                           style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 6,
+                            width: 30,
+                            height: 30,
+                            borderRadius: 8,
                             background: 'var(--bg-sunken)',
                             color: 'var(--fg-primary)',
                             display: 'inline-flex',
@@ -217,7 +255,7 @@ export default function ClientsPage() {
                         >
                           {initials(client.name)}
                         </span>
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <Link
                             to={`/clients/${client.id}`}
                             onClick={(e) => e.stopPropagation()}
@@ -233,10 +271,7 @@ export default function ClientsPage() {
                     </td>
                     <td style={{ color: 'var(--fg-secondary)' }}>{client.sector || '—'}</td>
                     <td>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: 3, background: brand.accent, flex: 'none' }} />
-                        {brand.name}
-                      </span>
+                      <BrandChip id={client.primaryBrandId as SubBrandId} full />
                     </td>
                     <td>
                       <Pill tone={STATUS_TONE[client.status]}>{client.status.toLowerCase()}</Pill>
