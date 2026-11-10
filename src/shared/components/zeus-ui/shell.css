@@ -1,0 +1,338 @@
+/* ============================================================
+   Zeus-UI shell — DawinOS soft-skin topbar primitives.
+   Scope: everything in this file applies only under
+          `<html data-skin="soft">` so adopting the new chrome is
+          an opt-in attribute flip and nothing leaks into pages
+          that still render the legacy shadcn chrome.
+   Source: design_handoff_zeusos_dawin_ui (dawin/skin-soft*.css,
+          dawin/styles.css, zeus-dawin.css).
+   ============================================================ */
+
+/* ---------- Topbar container ---------- */
+[data-skin="soft"] .zeus-topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 60px;
+  padding: 0 12px;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+/* Crumb shown next to the Group button when the current route is a Group module */
+[data-skin="soft"] .topbar-crumb {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin-left: 2px;
+}
+[data-skin="soft"] .topbar-crumb-parent {
+  font-size: 12.5px;
+  color: var(--fg-tertiary);
+}
+[data-skin="soft"] .topbar-crumb-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  color: var(--fg-primary);
+}
+
+/* ---------- Group button + mega menu wrapper ---------- */
+[data-skin="soft"] .group-menu-wrap {
+  position: relative;
+}
+
+[data-skin="soft"] .group-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0 10px 0 9px;
+  margin-right: 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+[data-skin="soft"] .group-menu-btn:hover {
+  background: #f3f1ed;
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .group-menu-btn.active {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+[data-skin="soft"] .group-menu-btn.open {
+  background: var(--fg-primary);
+  color: var(--bg-surface);
+}
+[data-skin="soft"] .group-menu-btn.open svg {
+  color: inherit;
+}
+
+/* ---------- Mega panel ---------- */
+[data-skin="soft"] .group-mega {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 120;
+  width: min(940px, calc(100vw - 120px));
+  max-height: calc(100vh - 90px);
+  overflow: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+  padding: 16px;
+  animation: zeus-mega-in 160ms cubic-bezier(.22,.61,.36,1);
+}
+[data-skin="soft"] .group-mega::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  height: 10px;
+}
+
+@keyframes zeus-mega-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+[data-skin="soft"] .group-mega-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 6px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 10px;
+}
+[data-skin="soft"] .group-mega-head b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .group-mega-head span {
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+}
+
+[data-skin="soft"] .group-mega-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 6px;
+}
+
+[data-skin="soft"] .group-mega-col {
+  border-radius: 16px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+[data-skin="soft"] .group-mega-col.on {
+  background: var(--bg-app);
+}
+
+[data-skin="soft"] .group-mega-title {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  border: 0;
+  background: none;
+  padding: 6px;
+  border-radius: 10px;
+  color: var(--fg-primary);
+  cursor: pointer;
+  width: 100%;
+}
+[data-skin="soft"] .group-mega-title:hover {
+  background: var(--bg-sunken);
+}
+[data-skin="soft"] .group-mega-title i {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-style: normal;
+}
+[data-skin="soft"] .group-mega-title b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+[data-skin="soft"] .group-mega-title small {
+  display: block;
+  font-size: 11px;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-skin="soft"] .group-mega-title .kbd {
+  font-family: var(--font-mono, ui-monospace, 'JetBrains Mono', Menlo, monospace);
+  font-size: 10px;
+  color: var(--fg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+[data-skin="soft"] .group-mega-links {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0 4px 44px;
+}
+[data-skin="soft"] .group-mega-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  text-align: left;
+}
+[data-skin="soft"] .group-mega-link:hover {
+  background: var(--bg-sunken);
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .group-mega-link.on {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ---------- ⌘K pill ---------- */
+[data-skin="soft"] .kbar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 12px;
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  color: var(--fg-tertiary);
+  font-size: 12px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 240px;
+  max-width: 480px;
+  height: 36px;
+  transition: background 160ms ease, color 160ms ease;
+}
+[data-skin="soft"] .kbar-button:hover {
+  background: #f3f1ed;
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .kbar-button .kbd {
+  margin-left: auto;
+  font-family: var(--font-mono, ui-monospace, 'JetBrains Mono', Menlo, monospace);
+  font-size: 10px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 1px 6px;
+  color: var(--fg-tertiary);
+}
+
+/* ---------- Icon buttons (AI / Comms / Bell) ---------- */
+[data-skin="soft"] .zeus-icon-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: var(--bg-surface);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  color: var(--fg-secondary);
+  transition: background 160ms ease, color 160ms ease;
+}
+[data-skin="soft"] .zeus-icon-btn:hover {
+  background: #f3f1ed;
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .zeus-icon-btn .badge {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+}
+
+/* ---------- Subsidiary / Brand picker ---------- */
+[data-skin="soft"] .sub-picker-wrap { position: relative; }
+[data-skin="soft"] .sub-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 8px 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--fg-primary);
+  cursor: pointer;
+  margin-left: 4px;
+  transition: background 160ms ease;
+}
+[data-skin="soft"] .sub-picker:hover { background: #f3f1ed; }
+[data-skin="soft"] .sub-picker .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(10, 31, 74, 0.2);
+}
+
+/* ---------- Avatar ---------- */
+[data-skin="soft"] .user-avatar-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0a1f4a 0%, #e63946 100%);
+  color: #fff;
+  border: 0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-skin="soft"] .user-avatar-btn:hover {
+  box-shadow:
+    0 0 0 2px var(--bg-surface),
+    0 0 0 4px var(--border-default);
+}

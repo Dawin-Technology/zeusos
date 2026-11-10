@@ -6,6 +6,8 @@
    existing shadcn/Tailwind utility classes.
    ============================================================ */
 
+@import "./shell.css";
+
 /* ---- Card ---- */
 .zui-card {
   background: var(--bg-surface);
