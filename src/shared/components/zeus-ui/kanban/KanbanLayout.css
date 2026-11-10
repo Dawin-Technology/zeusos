@@ -1,0 +1,221 @@
+/* ============================================================
+   KanbanLayout — soft-skin kanban board.
+   All selectors are scoped under `[data-skin="soft"]` so the
+   primitive only paints inside the DawinOS soft chrome. Pages
+   outside soft keep whatever styling they had before.
+   ============================================================ */
+
+[data-skin="soft"] .zui-kanban {
+  display: grid;
+  gap: 14px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-skin="soft"][data-density="compact"] .zui-kanban { gap: 10px; }
+
+/* Column */
+[data-skin="soft"] .zui-kanban-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: transparent;
+  scroll-snap-align: start;
+}
+[data-skin="soft"] .zui-kanban-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 4px 6px;
+}
+[data-skin="soft"] .zui-kanban-col-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg-primary);
+  letter-spacing: 0.005em;
+}
+[data-skin="soft"] .zui-kanban-col-count {
+  color: var(--fg-tertiary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+[data-skin="soft"] .zui-kanban-col-meta {
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Column accent stripe — the handoff's 3px rule under the title */
+[data-skin="soft"] .zui-kanban-col-rule {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  margin-bottom: 10px;
+  flex: none;
+}
+
+/* Card body: a soft, rounded-16 card with gentle hover lift */
+[data-skin="soft"] .zui-kanban-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 60px;
+}
+[data-skin="soft"][data-density="compact"] .zui-kanban-list { gap: 8px; }
+
+[data-skin="soft"] .zui-kanban-card {
+  display: block;
+  padding: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+[data-skin="soft"][data-density="compact"] .zui-kanban-card { padding: 10px 12px; border-radius: 14px; }
+
+[data-skin="soft"] .zui-kanban-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-default);
+  transform: translateY(-1px);
+}
+[data-skin="soft"] .zui-kanban-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+[data-skin="soft"] .zui-kanban-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+[data-skin="soft"] .zui-kanban-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--fg-primary);
+  letter-spacing: -0.005em;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+[data-skin="soft"] .zui-kanban-card-sub {
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-skin="soft"] .zui-kanban-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 6px;
+}
+[data-skin="soft"] .zui-kanban-card-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-skin="soft"] .zui-kanban-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--fg-secondary);
+}
+[data-skin="soft"] .zui-kanban-card-foot .zui-kanban-card-meta {
+  margin-left: auto;
+  color: var(--fg-tertiary);
+}
+
+/* Totals summary row above the list (shown when summary is passed) */
+[data-skin="soft"] .zui-kanban-col-summary {
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-size: 11.5px;
+  color: var(--fg-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: var(--shadow-sm);
+}
+[data-skin="soft"] .zui-kanban-col-summary-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty-column placeholder */
+[data-skin="soft"] .zui-kanban-empty {
+  padding: 16px;
+  border: 1px dashed var(--border-default);
+  border-radius: 14px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  background: transparent;
+}
+
+/* Swim-lane grouping */
+[data-skin="soft"] .zui-kanban-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+[data-skin="soft"] .zui-kanban-lane:first-child { margin-top: 0; }
+[data-skin="soft"] .zui-kanban-lane-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 2px 4px;
+}
+[data-skin="soft"] .zui-kanban-lane-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-tertiary);
+}
+
+/* Dark-theme tweaks: card rail stays visible on the dark surface */
+[data-skin="soft"][data-theme="dark"] .zui-kanban-card {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+[data-skin="soft"][data-theme="dark"] .zui-kanban-col-summary {
+  background: var(--bg-sunken);
+  border-color: var(--border-subtle);
+}

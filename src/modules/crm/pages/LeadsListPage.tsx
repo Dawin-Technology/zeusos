@@ -2,21 +2,31 @@
  * /crm — sales pipeline list view. Filter by stage/source/owner, search
  * by lead name. Defaults to the OPEN funnel (everything except WON/LOST).
  *
- * Parent-org only via Firestore rules; this page assumes the user is a
- * commercial actor.
+ * Shell re-skin PR 2: refreshed `PageHero` + `.zui-kpi-row` + stage chip
+ * filter track + the `.card .tbl` soft chrome (same pattern as
+ * ClientsPage / MasterJobsPage). Parent-org only via Firestore rules;
+ * this page assumes the user is a commercial actor.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus, Search } from 'lucide-react';
 import { useAuth } from '@/core/hooks/useAuth';
 import { listLeads } from '../services/lead.service';
 import type { Lead, LeadStage, LeadSource } from '../types/lead.types';
-import { LeadStageBadge } from '../components/LeadStageBadge';
+import { LeadStageBadge, STAGE_LABEL } from '../components/LeadStageBadge';
+import { PageHero } from '@/shared/components/refresh';
 
 const DEFAULT_ORG_ID = 'default';
 
-const STAGE_OPTIONS: Array<LeadStage | 'OPEN' | 'ALL'> = [
-  'OPEN', 'ALL', 'PROSPECT', 'QUALIFIED', 'PITCH', 'WON', 'LOST',
+const STAGE_CHIPS: Array<{ key: LeadStage | 'OPEN' | 'ALL'; label: string }> = [
+  { key: 'OPEN',      label: 'Open pipeline' },
+  { key: 'PROSPECT',  label: STAGE_LABEL.PROSPECT },
+  { key: 'QUALIFIED', label: STAGE_LABEL.QUALIFIED },
+  { key: 'PITCH',     label: STAGE_LABEL.PITCH },
+  { key: 'WON',       label: STAGE_LABEL.WON },
+  { key: 'LOST',      label: STAGE_LABEL.LOST },
+  { key: 'ALL',       label: 'All stages' },
 ];
 
 const SOURCE_OPTIONS: Array<LeadSource | 'ALL'> = [
@@ -77,113 +87,243 @@ export default function LeadsListPage() {
     ? rows.filter((l) => l.name.toLowerCase().includes(search.trim().toLowerCase()))
     : rows;
 
+  const kpis = useMemo(() => {
+    const open = rows.filter((l) => l.stage !== 'WON' && l.stage !== 'LOST');
+    const weightedByCurrency = new Map<string, number>();
+    for (const lead of open) {
+      const v = lead.estimatedValueMinor ?? 0;
+      const p = lead.probability ?? 0;
+      weightedByCurrency.set(
+        lead.currency,
+        (weightedByCurrency.get(lead.currency) ?? 0) + v * p,
+      );
+    }
+    const totalValueByCurrency = new Map<string, number>();
+    for (const lead of open) {
+      if (typeof lead.estimatedValueMinor !== 'number') continue;
+      totalValueByCurrency.set(
+        lead.currency,
+        (totalValueByCurrency.get(lead.currency) ?? 0) + lead.estimatedValueMinor,
+      );
+    }
+    return {
+      openCount: open.length,
+      weightedByCurrency,
+      totalValueByCurrency,
+    };
+  }, [rows]);
+
   return (
-    <div className="space-y-6 p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Sales Pipeline</h1>
-          <p className="text-sm text-muted-foreground">
-            Leads, prospects, and live pitches. Convert won deals into Clients in Account Management.
-          </p>
+    <div style={{ padding: 'var(--pad-page)' }}>
+      <PageHero
+        eyebrow="Operations · CRM"
+        title="Sales pipeline"
+        body="Leads, prospects and live pitches. Convert won deals into Clients in Account Management."
+        actions={
+          <>
+            <Link
+              to="/crm/pipeline"
+              className="btn btn-secondary"
+              data-testid="crm-pipeline-link"
+            >
+              Pipeline view
+            </Link>
+            <Link
+              to="/crm/new"
+              className="btn btn-primary"
+              data-testid="lead-new"
+            >
+              <Plus size={13} /> New lead
+            </Link>
+          </>
+        }
+      />
+
+      {!loading && !error && rows.length > 0 && (
+        <div className="zui-kpi-row" style={{ marginBottom: 20 }} data-testid="leads-kpis">
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Open leads</span>
+            <span className="zui-kpi-value">{kpis.openCount}</span>
+            <span className="zui-kpi-delta">excludes WON / LOST</span>
+          </div>
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Open value</span>
+            {kpis.totalValueByCurrency.size === 0 ? (
+              <span className="zui-kpi-value">—</span>
+            ) : (
+              <ul
+                className="zui-kpi-value"
+                style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: 20, lineHeight: 1.2 }}
+              >
+                {Array.from(kpis.totalValueByCurrency.entries()).map(([ccy, total]) => (
+                  <li key={ccy}>{formatMoney(total, ccy)}</li>
+                ))}
+              </ul>
+            )}
+            <span className="zui-kpi-delta">sum of estimated values</span>
+          </div>
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Weighted pipeline</span>
+            {kpis.weightedByCurrency.size === 0 ? (
+              <span className="zui-kpi-value">—</span>
+            ) : (
+              <ul
+                className="zui-kpi-value"
+                style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: 20, lineHeight: 1.2 }}
+              >
+                {Array.from(kpis.weightedByCurrency.entries()).map(([ccy, total]) => (
+                  <li key={ccy}>{formatMoney(total, ccy)}</li>
+                ))}
+              </ul>
+            )}
+            <span className="zui-kpi-delta">value × probability</span>
+          </div>
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Showing</span>
+            <span className="zui-kpi-value">{visible.length}</span>
+            <span className="zui-kpi-delta">after current filters</span>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name…"
-            className="rounded border px-2 py-1 text-sm"
-            data-testid="lead-search"
-          />
+      )}
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          flexWrap: 'wrap',
+          marginBottom: 14,
+        }}
+      >
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {STAGE_CHIPS.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              className={`btn ${stageFilter === s.key ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setStageFilter(s.key)}
+              data-testid={`lead-stage-chip-${s.key}`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 999,
+              border: '1px solid var(--border-default)',
+              background: 'var(--bg-surface)',
+              fontSize: 12.5,
+              color: 'var(--fg-secondary)',
+            }}
+          >
+            <Search size={14} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name…"
+              data-testid="lead-search"
+              style={{
+                background: 'transparent',
+                border: 0,
+                outline: 'none',
+                fontSize: 12.5,
+                width: 180,
+                color: 'inherit',
+              }}
+            />
+          </label>
+          {/* Keep the stage dropdown as a hidden accessibility fallback / test anchor */}
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value as LeadStage | 'OPEN' | 'ALL')}
-            className="rounded border px-2 py-1 text-sm"
+            className="btn btn-secondary"
             data-testid="lead-stage-filter"
+            style={{ padding: '4px 8px' }}
           >
-            {STAGE_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s === 'OPEN' ? 'Open pipeline' : s === 'ALL' ? 'All stages' : s}
-              </option>
+            {STAGE_CHIPS.map((s) => (
+              <option key={s.key} value={s.key}>{s.label}</option>
             ))}
           </select>
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value as LeadSource | 'ALL')}
-            className="rounded border px-2 py-1 text-sm"
+            className="btn btn-secondary"
             data-testid="lead-source-filter"
+            style={{ padding: '4px 8px' }}
           >
             {SOURCE_OPTIONS.map((s) => (
               <option key={s} value={s}>{s === 'ALL' ? 'All sources' : s}</option>
             ))}
           </select>
-          <Link
-            to="/crm/pipeline"
-            className="rounded border px-3 py-1 text-sm"
-            data-testid="crm-pipeline-link"
-          >
-            Pipeline view
-          </Link>
-          <Link
-            to="/crm/new"
-            className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground"
-            data-testid="lead-new"
-          >
-            + New lead
-          </Link>
         </div>
-      </header>
+      </div>
 
-      {loading && <p className="text-sm text-muted-foreground">Loading leads…</p>}
-      {error && <p className="text-sm text-destructive">Error: {error}</p>}
+      {loading && <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading leads…</p>}
+      {error && <p style={{ fontSize: 13, color: 'var(--rag-red)' }}>Error: {error}</p>}
 
       {!loading && !error && visible.length === 0 && (
-        <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">
+        <div
+          className="card card-pad"
+          style={{ borderStyle: 'dashed', textAlign: 'center', color: 'var(--fg-tertiary)', fontSize: 13 }}
+        >
           No leads in this view. Click <strong>+ New lead</strong> to add one.
         </div>
       )}
 
       {!loading && !error && visible.length > 0 && (
-        <div className="overflow-x-auto rounded border">
-          <table className="w-full text-sm" data-testid="lead-table">
-            <thead className="bg-muted/50">
-              <tr className="text-left text-xs uppercase text-muted-foreground">
-                <th className="px-4 py-2 font-medium">Lead</th>
-                <th className="px-4 py-2 font-medium">Contact</th>
-                <th className="px-4 py-2 font-medium">Source</th>
-                <th className="px-4 py-2 font-medium">Stage</th>
-                <th className="px-4 py-2 font-medium">Value</th>
-                <th className="px-4 py-2 font-medium">Next action</th>
+        <div className="card" style={{ overflow: 'hidden' }}>
+          <table className="tbl" data-testid="lead-table">
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Contact</th>
+                <th>Source</th>
+                <th>Stage</th>
+                <th style={{ textAlign: 'right' }}>Value</th>
+                <th>Next action</th>
               </tr>
             </thead>
             <tbody>
               {visible.map((l) => (
-                <tr key={l.id} className="border-t hover:bg-muted/30" data-lead-id={l.id}>
-                  <td className="px-4 py-2 font-medium">
-                    <Link to={`/crm/${l.id}`} className="hover:underline">{l.name}</Link>
+                <tr key={l.id} data-lead-id={l.id} data-testid="lead-row">
+                  <td>
+                    <Link to={`/crm/${l.id}`} style={{ fontWeight: 600 }}>
+                      {l.name}
+                    </Link>
                   </td>
-                  <td className="px-4 py-2 text-xs">
-                    {l.contactName || <span className="text-muted-foreground">—</span>}
+                  <td style={{ fontSize: 12.5 }}>
+                    {l.contactName || (
+                      <span style={{ color: 'var(--fg-tertiary)' }}>—</span>
+                    )}
                     {l.contactEmail && (
-                      <span className="block text-muted-foreground">{l.contactEmail}</span>
+                      <span style={{ display: 'block', fontSize: 11, color: 'var(--fg-tertiary)' }}>
+                        {l.contactEmail}
+                      </span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{l.source}</td>
-                  <td className="px-4 py-2"><LeadStageBadge stage={l.stage} /></td>
-                  <td className="px-4 py-2 font-medium">
+                  <td style={{ fontSize: 11.5, color: 'var(--fg-tertiary)' }}>{l.source}</td>
+                  <td><LeadStageBadge stage={l.stage} /></td>
+                  <td className="tabular" style={{ textAlign: 'right', fontWeight: 600 }}>
                     {formatMoney(l.estimatedValueMinor, l.currency)}
                   </td>
-                  <td className="px-4 py-2 text-xs">
+                  <td style={{ fontSize: 12.5 }}>
                     {l.nextActionLabel ? (
                       <>
                         {l.nextActionLabel}
                         {l.nextActionDate && (
-                          <span className="ml-1 text-muted-foreground">
+                          <span style={{ marginLeft: 6, color: 'var(--fg-tertiary)' }}>
                             · {formatDate(l.nextActionDate)}
                           </span>
                         )}
                       </>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span style={{ color: 'var(--fg-tertiary)' }}>—</span>
                     )}
                   </td>
                 </tr>

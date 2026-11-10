@@ -29,6 +29,14 @@ export {
 } from './DataTable';
 export { ModuleHeader, type ModuleHeaderProps, type ModuleTab } from './ModuleHeader';
 export {
+  KanbanLayout,
+  KanbanCard,
+  type KanbanColumn,
+  type KanbanItem,
+  type KanbanLane,
+  type KanbanLayoutProps,
+} from './kanban/KanbanLayout';
+export {
   BrandChip,
   MiniBar,
   MoneyCell,

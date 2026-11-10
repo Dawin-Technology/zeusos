@@ -1,9 +1,13 @@
 /**
- * /crm/pipeline — column-per-stage view of open leads, plus weighted
- * value summary per stage.
+ * /crm/pipeline — column-per-stage view of open leads with a soft-skin
+ * Kanban board.
  *
- * No drag-and-drop yet (Phase 5 candidate); stage changes happen on the
- * detail page. The columns are read-only summaries.
+ * Shell re-skin PR 2: the stages live on the shared `KanbanLayout`
+ * primitive (`src/shared/components/zeus-ui/kanban`) so the card/column
+ * chrome matches the DawinOS soft handoff. Data flow is unchanged —
+ * drag/drop is wired through the primitive's `onItemMove` hook but no
+ * stage write is persisted yet (Phase 5 still). Existing test ids
+ * (`kanban-board`, `kpi-*`, `funnel-kpis`, `data-stage`) are preserved.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -11,16 +15,37 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/core/hooks/useAuth';
 import { listLeads } from '../services/lead.service';
 import type { Lead, LeadStage } from '../types/lead.types';
-import { LeadCard } from '../components/LeadCard';
 import { STAGE_LABEL } from '../components/LeadStageBadge';
 import { PageHero } from '@/shared/components/refresh';
+import {
+  KanbanLayout,
+  type KanbanColumn,
+  type KanbanItem,
+} from '@/shared/components/zeus-ui';
 
 const DEFAULT_ORG_ID = 'default';
 
 const PIPELINE_STAGES: LeadStage[] = ['PROSPECT', 'QUALIFIED', 'PITCH', 'WON'];
 
+const STAGE_TONE: Record<LeadStage, string> = {
+  PROSPECT:  'var(--border-strong)',
+  QUALIFIED: 'var(--rag-amber)',
+  PITCH:     'var(--rag-blue)',
+  WON:       'var(--rag-green)',
+  LOST:      'var(--rag-red)',
+};
+
 function formatMoney(minor: number, currency: string): string {
   return `${currency} ${(minor / 100).toLocaleString(undefined, { minimumFractionDigits: 0 })}`;
+}
+
+function formatDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value.slice(0, 10);
+  const ts = value as { seconds?: number; toDate?: () => Date };
+  if (typeof ts.toDate === 'function') return ts.toDate().toISOString().slice(0, 10);
+  if (typeof ts.seconds === 'number') return new Date(ts.seconds * 1000).toISOString().slice(0, 10);
+  return undefined;
 }
 
 export default function PipelineKanbanPage() {
@@ -41,18 +66,9 @@ export default function PipelineKanbanPage() {
       .finally(() => setLoading(false));
   }, [user, orgId]);
 
-  // Group by stage. WON column shows current-month closes; LOST is hidden
-  // from the Kanban (visible only in the list view filter).
-  const byStage = PIPELINE_STAGES.reduce<Record<LeadStage, Lead[]>>((acc, s) => {
-    acc[s] = rows.filter((l) => l.stage === s);
-    return acc;
-  }, {} as Record<LeadStage, Lead[]>);
-
   // ── Funnel KPIs ────────────────────────────────────────────────────
-  // Weighted pipeline value sums expected value of OPEN leads only
-  // (PROSPECT/QUALIFIED/PITCH). Win-rate uses leads closed in the last 90
-  // days; closing date is a stored Firestore Timestamp serverSide so we
-  // accept either a Date-like object or an ISO string.
+  // Same inputs as the pre-soft version: weighted pipeline value of
+  // OPEN leads, 90-day win rate, 90-day closed sample size.
   const kpis = useMemo(() => {
     const open = rows.filter((l) => l.stage !== 'WON' && l.stage !== 'LOST');
     const weightedByCurrency = new Map<string, number>();
@@ -94,7 +110,7 @@ export default function PipelineKanbanPage() {
   }, [rows]);
 
   // Currency assumption: the Kanban shows totals only when all leads in
-  // a column share the same currency. Otherwise we render "—" and count.
+  // a column share the same currency. Otherwise we show "mixed" + count.
   function columnTotal(leads: Lead[]): { label: string; subtitle: string } {
     if (leads.length === 0) return { label: '—', subtitle: 'no leads' };
     const currencies = new Set(leads.map((l) => l.currency));
@@ -109,9 +125,53 @@ export default function PipelineKanbanPage() {
     );
     return {
       label: formatMoney(total, currency),
-      subtitle: `weighted: ${formatMoney(weighted, currency)} · ${leads.length} leads`,
+      subtitle: `weighted ${formatMoney(weighted, currency)} · ${leads.length} leads`,
     };
   }
+
+  // Shape columns + cards once from the current `rows` snapshot.
+  const columns: KanbanColumn[] = useMemo(() => {
+    return PIPELINE_STAGES.map((stage) => {
+      const leads = rows.filter((l) => l.stage === stage);
+      const totals = columnTotal(leads);
+      return {
+        id: stage,
+        title: STAGE_LABEL[stage],
+        count: leads.length,
+        tone: STAGE_TONE[stage],
+        summary: (
+          <>
+            <span className="zui-kanban-col-summary-value">{totals.label}</span>
+            <span>{totals.subtitle}</span>
+          </>
+        ),
+      };
+    });
+  }, [rows]);
+
+  const items: KanbanItem[] = useMemo(
+    () =>
+      rows
+        .filter((l) => l.stage !== 'LOST')
+        .map((lead) => {
+          const nextDate = formatDate(lead.nextActionDate);
+          return {
+            id: lead.id,
+            columnId: lead.stage,
+            title: lead.name,
+            subtitle: lead.contactName,
+            value:
+              typeof lead.estimatedValueMinor === 'number'
+                ? formatMoney(lead.estimatedValueMinor, lead.currency)
+                : undefined,
+            meta: lead.nextActionLabel
+              ? `${lead.nextActionLabel}${nextDate ? ` · ${nextDate}` : ''}`
+              : lead.source,
+            href: `/crm/${lead.id}`,
+          } satisfies KanbanItem;
+        }),
+    [rows],
+  );
 
   return (
     <div style={{ padding: 'var(--pad-page)' }} className="space-y-6">
@@ -130,81 +190,55 @@ export default function PipelineKanbanPage() {
       {error && <p className="text-sm text-destructive">Error: {error}</p>}
 
       {!loading && !error && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="funnel-kpis">
-          <div className="rounded border bg-card p-3">
-            <p className="text-xs uppercase text-muted-foreground">Open leads</p>
-            <p className="mt-1 text-2xl font-semibold" data-testid="kpi-open-count">
+        <div className="zui-kpi-row" data-testid="funnel-kpis">
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Open leads</span>
+            <span className="zui-kpi-value" data-testid="kpi-open-count">
               {kpis.openCount}
-            </p>
-            <p className="text-xs text-muted-foreground">across {PIPELINE_STAGES.length - 1} open stages</p>
+            </span>
+            <span className="zui-kpi-delta">across {PIPELINE_STAGES.length - 1} open stages</span>
           </div>
 
-          <div className="rounded border bg-card p-3">
-            <p className="text-xs uppercase text-muted-foreground">Weighted pipeline</p>
-            {kpis.weightedByCurrency.size === 0 && (
-              <p className="mt-1 text-2xl font-semibold">—</p>
-            )}
-            {kpis.weightedByCurrency.size > 0 && (
-              <ul className="mt-1 space-y-0.5" data-testid="kpi-weighted">
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Weighted pipeline</span>
+            {kpis.weightedByCurrency.size === 0 ? (
+              <span className="zui-kpi-value">—</span>
+            ) : (
+              <ul
+                className="zui-kpi-value"
+                style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: 20, lineHeight: 1.2 }}
+                data-testid="kpi-weighted"
+              >
                 {Array.from(kpis.weightedByCurrency.entries()).map(([ccy, total]) => (
-                  <li key={ccy} className="font-semibold">
-                    {formatMoney(total, ccy)}
-                  </li>
+                  <li key={ccy}>{formatMoney(total, ccy)}</li>
                 ))}
               </ul>
             )}
-            <p className="text-xs text-muted-foreground">value × probability, by currency</p>
+            <span className="zui-kpi-delta">value × probability, by currency</span>
           </div>
 
-          <div className="rounded border bg-card p-3">
-            <p className="text-xs uppercase text-muted-foreground">Win rate · 90d</p>
-            <p className="mt-1 text-2xl font-semibold" data-testid="kpi-win-rate">
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Win rate · 90d</span>
+            <span className="zui-kpi-value" data-testid="kpi-win-rate">
               {kpis.winRate === null ? '—' : `${Math.round(kpis.winRate * 100)}%`}
-            </p>
-            <p className="text-xs text-muted-foreground">
+            </span>
+            <span className="zui-kpi-delta">
               {kpis.closedSampleSize === 0
                 ? 'no leads closed yet'
                 : `${kpis.wonRecently} won / ${kpis.lostRecently} lost`}
-            </p>
+            </span>
           </div>
 
-          <div className="rounded border bg-card p-3">
-            <p className="text-xs uppercase text-muted-foreground">Closed · 90d</p>
-            <p className="mt-1 text-2xl font-semibold">{kpis.closedSampleSize}</p>
-            <p className="text-xs text-muted-foreground">leads moved to WON or LOST</p>
+          <div className="zui-kpi">
+            <span className="zui-kpi-label">Closed · 90d</span>
+            <span className="zui-kpi-value">{kpis.closedSampleSize}</span>
+            <span className="zui-kpi-delta">leads moved to WON or LOST</span>
           </div>
         </div>
       )}
 
       {!loading && !error && (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4" data-testid="kanban-board">
-          {PIPELINE_STAGES.map((stage) => {
-            const leads = byStage[stage];
-            const totals = columnTotal(leads);
-            return (
-              <div key={stage} className="rounded border bg-muted/20 p-3" data-stage={stage}>
-                <header className="mb-3 flex items-baseline justify-between">
-                  <h2 className="text-sm font-semibold">{STAGE_LABEL[stage]}</h2>
-                  <span className="text-xs text-muted-foreground">{leads.length}</span>
-                </header>
-                <div className="mb-3 rounded bg-card p-2 text-xs">
-                  <p className="font-semibold">{totals.label}</p>
-                  <p className="text-muted-foreground">{totals.subtitle}</p>
-                </div>
-                <div className="space-y-2">
-                  {leads.map((l) => (
-                    <LeadCard key={l.id} lead={l} />
-                  ))}
-                  {leads.length === 0 && (
-                    <p className="rounded border border-dashed p-3 text-center text-xs text-muted-foreground">
-                      Empty
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <KanbanLayout columns={columns} items={items} testId="kanban-board" />
       )}
     </div>
   );
