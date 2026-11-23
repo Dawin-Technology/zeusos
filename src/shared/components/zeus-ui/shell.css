@@ -854,3 +854,311 @@
   font: 500 10px var(--font-mono);
   color: var(--fg-tertiary);
 }
+
+/* ============================================================
+   Soft-skin tab rail — PR 3
+   The underlined tab pattern used by TrafficLayout (and reusable
+   for any future tabbed module shell). Red accent under the
+   active tab; the whole rail sits on the subtle hairline that
+   divides it from the first tab's content.
+   ============================================================ */
+[data-skin="soft"] .zeus-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-skin="soft"] .zeus-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  margin-bottom: -1px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-tertiary);
+  font: 500 13px var(--font-sans);
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+[data-skin="soft"] .zeus-tab:hover {
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .zeus-tab.active {
+  color: var(--fg-primary);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+[data-skin="soft"] .zeus-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ============================================================
+   Soft-skin tile — PR 3
+   Lighter-weight sibling of `.zui-kpi`, used for threshold
+   grids (Brand Capacity) and portfolio summaries (IwoHealth).
+   Tiles are the shared language between Traffic and Delivery
+   surfaces.
+   ============================================================ */
+[data-skin="soft"] .zeus-tile-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(var(--tile-cols, 3), minmax(0, 1fr));
+}
+@media (max-width: 760px) {
+  [data-skin="soft"] .zeus-tile-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  [data-skin="soft"] .zeus-tile-grid { grid-template-columns: 1fr; }
+}
+[data-skin="soft"] .zeus-tile {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 78px;
+}
+[data-skin="soft"] .zeus-tile-label {
+  font: 600 10.5px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+[data-skin="soft"] .zeus-tile-value {
+  font: 600 22px/1.1 var(--font-sans);
+  letter-spacing: -0.015em;
+  color: var(--fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+[data-skin="soft"] .zeus-tile-value .zeus-tile-unit {
+  font: 500 13px var(--font-sans);
+  color: var(--fg-tertiary);
+  margin-left: 4px;
+  letter-spacing: 0;
+}
+[data-skin="soft"] .zeus-tile-sub {
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+}
+[data-skin="soft"] .zeus-tile.warn {
+  border-color: color-mix(in oklab, var(--rag-red) 30%, transparent);
+  background: var(--rag-red-soft);
+}
+[data-skin="soft"] .zeus-tile.warn .zeus-tile-value {
+  color: var(--rag-red-deep, var(--rag-red));
+}
+
+/* ============================================================
+   Soft-skin panel — PR 3
+   Rounded surface wrapper used for brand sections, Override
+   Log tables, and any grouped list that needs its own frame.
+   ============================================================ */
+[data-skin="soft"] .zeus-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+[data-skin="soft"] .zeus-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-skin="soft"] .zeus-panel-head h2,
+[data-skin="soft"] .zeus-panel-head h3 {
+  margin: 0;
+  font: 600 14px var(--font-sans);
+  letter-spacing: -0.01em;
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .zeus-panel-head-meta {
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+[data-skin="soft"] .zeus-panel-pad { padding: 14px 18px; }
+[data-skin="soft"] .zeus-panel-empty {
+  padding: 16px 18px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--fg-tertiary);
+}
+
+/* ============================================================
+   Soft-skin row list — PR 3
+   The grouped list rows used by ActiveIwos, BurnAndSla,
+   IwoHealth, and the OverrideLog. One pattern — grid-cell row,
+   soft hairline separator, hover tint.
+   ============================================================ */
+[data-skin="soft"] .zeus-row-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+[data-skin="soft"] .zeus-row {
+  display: grid;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+  color: var(--fg-primary);
+  transition: background 120ms ease;
+}
+[data-skin="soft"] .zeus-row:last-child { border-bottom: 0; }
+[data-skin="soft"] .zeus-row:hover { background: var(--bg-sunken); }
+[data-skin="soft"] .zeus-row-link {
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  font-weight: 600;
+  color: var(--fg-primary);
+  text-decoration: none;
+}
+[data-skin="soft"] .zeus-row-link:hover { color: var(--accent); }
+[data-skin="soft"] .zeus-row-sub {
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   Soft-skin burn meter — PR 3
+   Inline progress bar used by ActiveIwos and BrandCapacity. The
+   larger per-IWO burn meter (BurnMeterBar component) is used
+   verbatim on BurnAndSla + IwoHealth where it owns the detail.
+   ============================================================ */
+[data-skin="soft"] .zeus-burn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+[data-skin="soft"] .zeus-burn-track {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  background: var(--bg-sunken);
+  border-radius: 999px;
+  overflow: hidden;
+  min-width: 60px;
+}
+[data-skin="soft"] .zeus-burn-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--rag-green);
+  transition: width 240ms ease;
+}
+[data-skin="soft"] .zeus-burn-fill.warn { background: var(--rag-amber); }
+[data-skin="soft"] .zeus-burn-fill.over { background: var(--rag-red); }
+[data-skin="soft"] .zeus-burn-label {
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  min-width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Soft-skin state pill — PR 3
+   Compact uppercase pill for IWO state labels (ISSUED, ACCEPTED,
+   IN_PROGRESS, …). Tones mirror the RAG palette.
+   ============================================================ */
+[data-skin="soft"] .zeus-state-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font: 600 9.5px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--bg-sunken);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+[data-skin="soft"] .zeus-state-pill.amber { background: var(--rag-amber-soft); color: var(--rag-amber-deep, var(--rag-amber)); }
+[data-skin="soft"] .zeus-state-pill.green { background: var(--rag-green-soft); color: var(--rag-green-deep, var(--rag-green)); }
+[data-skin="soft"] .zeus-state-pill.red   { background: var(--rag-red-soft);   color: var(--rag-red-deep, var(--rag-red)); }
+[data-skin="soft"] .zeus-state-pill.accent { background: var(--accent-soft);   color: var(--accent); }
+
+/* ============================================================
+   Soft-skin form controls — PR 3
+   Scoped <select> + <input> reskin so the Routing Queue's
+   capability picker, Override editor's brand picker, and
+   IWOWorkspace's time/cost forms all follow the shell look.
+   ============================================================ */
+[data-skin="soft"] .zeus-select,
+[data-skin="soft"] .zeus-input {
+  display: block;
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  color: var(--fg-primary);
+  font: 500 13px var(--font-sans);
+  letter-spacing: -0.005em;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+[data-skin="soft"] .zeus-input { padding: 6px 10px; height: 34px; }
+[data-skin="soft"] .zeus-select:hover,
+[data-skin="soft"] .zeus-input:hover { border-color: var(--border-strong); }
+[data-skin="soft"] .zeus-select:focus-visible,
+[data-skin="soft"] .zeus-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+[data-skin="soft"] .zeus-field-label {
+  display: block;
+  font: 600 10.5px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  margin-bottom: 4px;
+}
+
+/* Soft banner accent tone — used for the Odd Gorilla conflict-isolated
+   banner on /delivery/inbox so it reads as a Zeus-brand note, not an
+   amber warning. The primary Banner primitive adds `tone-accent` to
+   its union; this styles it. */
+[data-skin="soft"] .zui-banner.tone-accent {
+  background: var(--accent-soft);
+  border-color: color-mix(in oklab, var(--accent) 24%, transparent);
+}
+[data-skin="soft"] .zui-banner.tone-accent .zui-banner-icon {
+  background: var(--accent);
+}
+
+/* ============================================================
+   Dark-theme tweaks — PR 3 soft Traffic/Delivery surfaces
+   ============================================================ */
+[data-skin="soft"][data-theme="dark"] .zeus-tile,
+[data-skin="soft"][data-theme="dark"] .zeus-panel {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+[data-skin="soft"][data-theme="dark"] .zeus-tile.warn {
+  background: color-mix(in oklab, var(--rag-red) 14%, var(--bg-surface));
+}
+[data-skin="soft"][data-theme="dark"] .zeus-select,
+[data-skin="soft"][data-theme="dark"] .zeus-input {
+  background: var(--bg-sunken);
+  border-color: var(--border-default);
+}

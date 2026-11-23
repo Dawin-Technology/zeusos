@@ -1,4 +1,4 @@
-/* eslint-disable design-system/no-inline-style-literals -- TODO(U.4): early Phase 6.UI.D.2 scaffolding mirrors BurnAndSlaPage; full Tailwind token refactor scheduled with the U.4 sweep. */
+/* eslint-disable design-system/no-inline-style-literals -- soft-skin re-skin PR 3 keeps many inline CSS vars while the shell primitives are still growing; full migration lands with the U.4 sweep. */
 /**
  * IwoHealthPage — `/reports` (parent-org).
  *
@@ -17,12 +17,15 @@
  *     comes from `computeBurnMeter` (Phase 3.E delivery service).
  *
  * Layout:
- *   1. Portfolio summary — total active, overheating count, average
- *      burn % across all brands.
- *   2. Filter chips (All / Overheating / On-track).
- *   3. One section per brand with a header carrying counts + brand
- *      label, then rows sorted BLOCKED → WARN → OK then by burn %
- *      desc. Empty brands collapse.
+ *   1. Portfolio summary tiles — total active, overheating count,
+ *      average burn % — same `.zeus-tile` grid as BurnAndSla so the
+ *      two surfaces read as siblings.
+ *   2. Filter chips (All / Overheating / On-track) — `.zui-chip`
+ *      pattern shared with BurnAndSla.
+ *   3. One `.zeus-panel` per brand with a header carrying counts +
+ *      brand label, then `.zeus-row` list rows sorted BLOCKED →
+ *      WARN → OK then by burn % desc. Empty brands collapse under
+ *      non-"all" filters.
  *
  * Out of scope for v1 (separate report tabs in future):
  *   • Routing override frequency (RoutingBrandProposed event log)
@@ -40,6 +43,7 @@ import { ALL_DELIVERY_SUBSIDIARIES } from '@/core/settings/brand-capabilities';
 import { subscribeActiveIwos } from '@/modules/traffic/services/traffic.service';
 import { computeBurnMeter, type BurnMeter } from '@/modules/delivery/services/burnMeter';
 import { BurnMeterBar } from '@/modules/delivery/components/BurnMeterBar';
+import { PageHero } from '@/shared/components/refresh';
 
 type Filter = 'all' | 'overheating' | 'on-track';
 
@@ -157,20 +161,27 @@ export default function IwoHealthPage() {
   }, [iwos]);
 
   return (
-    <div style={{ padding: 24 }} data-testid="reports-iwo-health-page">
-      <header style={{ marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Reports — IWO Health</h1>
-        <p style={{ marginTop: 4, color: '#475569', fontSize: 13 }}>
-          Active work orders across every sibling brand. Sorted with the most overheating brand first;
-          within each brand, BLOCKED → WARN → OK.
-        </p>
-      </header>
+    <div style={{ padding: 'var(--pad-page)' }} data-testid="reports-iwo-health-page">
+      <PageHero
+        eyebrow="Reports"
+        title="IWO Health"
+        body="Active work orders across every sibling brand. Sorted with the most overheating brand first; within each brand, BLOCKED → WARN → OK."
+      />
 
       {err && (
-        <div role="alert" data-testid="reports-error" style={{
-          padding: 12, marginBottom: 16, borderRadius: 6,
-          background: '#fef2f2', color: '#7f1d1d', border: '1px solid #fecaca',
-        }}>
+        <div
+          role="alert"
+          data-testid="reports-error"
+          className="zeus-panel"
+          style={{
+            padding: '12px 16px',
+            marginBottom: 16,
+            borderColor: 'color-mix(in oklab, var(--rag-red) 30%, transparent)',
+            background: 'var(--rag-red-soft)',
+            color: 'var(--rag-red-deep, var(--rag-red))',
+            fontSize: 13,
+          }}
+        >
           {err}
         </div>
       )}
@@ -178,57 +189,47 @@ export default function IwoHealthPage() {
       {/* Portfolio summary tiles */}
       <section
         data-testid="reports-portfolio-summary"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(140px, 1fr))',
-          gap: 12,
-          marginBottom: 16,
-        }}
+        style={{ marginBottom: 16 }}
       >
-        <div style={{
-          padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff',
-        }}>
-          <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Active IWOs
-          </div>
-          <div data-testid="reports-portfolio-total" style={{ marginTop: 4, fontSize: 22, fontWeight: 600 }}>
-            {portfolio.total}
-          </div>
-        </div>
-        <div style={{
-          padding: 12, borderRadius: 8,
-          border: `1px solid ${portfolio.overheating > 0 ? '#fecaca' : '#e2e8f0'}`,
-          background: portfolio.overheating > 0 ? '#fef2f2' : '#fff',
-        }}>
-          <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Overheating
-          </div>
-          <div
-            data-testid="reports-portfolio-overheating"
-            style={{
-              marginTop: 4, fontSize: 22, fontWeight: 600,
-              color: portfolio.overheating > 0 ? '#7f1d1d' : '#0f172a',
-            }}
-          >
-            {portfolio.overheating}
-          </div>
-        </div>
-        <div style={{
-          padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff',
-        }}>
-          <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Avg burn
-          </div>
-          <div data-testid="reports-portfolio-avg-burn" style={{ marginTop: 4, fontSize: 22, fontWeight: 600 }}>
-            {portfolio.avgBurnPct}%
-          </div>
-        </div>
+        <ul
+          className="zeus-tile-grid"
+          style={{ listStyle: 'none', padding: 0, margin: 0 }}
+        >
+          <li className="zeus-tile">
+            <span className="zeus-tile-label">Active IWOs</span>
+            <span
+              className="zeus-tile-value"
+              data-testid="reports-portfolio-total"
+            >
+              {portfolio.total}
+            </span>
+          </li>
+          <li className={`zeus-tile${portfolio.overheating > 0 ? ' warn' : ''}`}>
+            <span className="zeus-tile-label">Overheating</span>
+            <span
+              className="zeus-tile-value"
+              data-testid="reports-portfolio-overheating"
+            >
+              {portfolio.overheating}
+            </span>
+          </li>
+          <li className="zeus-tile">
+            <span className="zeus-tile-label">Avg burn</span>
+            <span
+              className="zeus-tile-value"
+              data-testid="reports-portfolio-avg-burn"
+            >
+              {portfolio.avgBurnPct}
+              <span className="zeus-tile-unit">%</span>
+            </span>
+          </li>
+        </ul>
       </section>
 
       <div
         role="tablist"
         aria-label="Filter active IWOs"
-        style={{ display: 'flex', gap: 8, marginBottom: 16 }}
+        style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}
       >
         {(['all', 'overheating', 'on-track'] as Filter[]).map(key => {
           const active = filter === key;
@@ -241,16 +242,7 @@ export default function IwoHealthPage() {
               type="button"
               data-testid={`reports-filter-${key}`}
               onClick={() => setFilter(key)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 999,
-                border: active ? '1px solid #0f172a' : '1px solid #e2e8f0',
-                background: active ? '#0f172a' : '#fff',
-                color: active ? '#fff' : '#0f172a',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: 500,
-              }}
+              className={`zui-chip${active ? ' active' : ''}`}
             >
               {label}
             </button>
@@ -259,89 +251,83 @@ export default function IwoHealthPage() {
       </div>
 
       {portfolio.total === 0 ? (
-        <p
+        <div
           data-testid="reports-empty"
-          style={{ color: '#64748b', fontSize: 13 }}
+          className="zeus-panel"
+          style={{
+            padding: '24px 20px',
+            textAlign: 'center',
+            color: 'var(--fg-tertiary)',
+            fontSize: 13,
+            borderStyle: 'dashed',
+          }}
         >
           No active work orders across any brand.
-        </p>
+        </div>
       ) : (
-        groups.map((g) => {
-          const visible = applyFilter(g.rows, filter);
-          // Hide empty brand sections under non-"all" filters to keep the page scannable.
-          if (visible.length === 0 && filter !== 'all') return null;
-          return (
-            <section
-              key={g.brandId}
-              data-testid={`reports-brand-${g.brandId}`}
-              style={{
-                marginBottom: 20,
-                padding: 12,
-                borderRadius: 8,
-                border: '1px solid #e2e8f0',
-                background: '#fff',
-              }}
-            >
-              <header style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
-                marginBottom: 8,
-              }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{g.label}</h2>
-                  <div style={{ marginTop: 2, color: '#64748b', fontSize: 12 }} data-testid={`reports-brand-${g.brandId}-stats`}>
-                    {g.total} active · {g.overheating} overheating · {g.avgBurnPct}% avg burn
-                  </div>
-                </div>
-              </header>
-              {visible.length === 0 ? (
-                <p style={{ color: '#94a3b8', fontSize: 12, margin: 0 }} data-testid={`reports-brand-${g.brandId}-empty`}>
-                  {g.total === 0
-                    ? 'No active work orders.'
-                    : 'No work orders match this filter.'}
-                </p>
-              ) : (
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                  {visible.map(({ iwo, meter }) => (
-                    <li
-                      key={iwo.id}
-                      data-testid={`reports-row-${iwo.id}`}
-                      style={{
-                        padding: '10px 0',
-                        borderBottom: '1px solid #f1f5f9',
-                        display: 'grid',
-                        gridTemplateColumns: 'minmax(140px, 1fr) 3fr',
-                        gap: 16,
-                        alignItems: 'center',
-                      }}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {groups.map((g) => {
+            const visible = applyFilter(g.rows, filter);
+            // Hide empty brand sections under non-"all" filters to keep the page scannable.
+            if (visible.length === 0 && filter !== 'all') return null;
+            return (
+              <section
+                key={g.brandId}
+                data-testid={`reports-brand-${g.brandId}`}
+                className="zeus-panel"
+              >
+                <header className="zeus-panel-head">
+                  <div>
+                    <h2>{g.label}</h2>
+                    <div
+                      className="zeus-row-sub"
+                      style={{ marginTop: 3 }}
+                      data-testid={`reports-brand-${g.brandId}-stats`}
                     >
-                      <div>
-                        <Link
-                          to={`/delivery/iwo/${iwo.id}`}
-                          style={{
-                            fontFamily: 'monospace',
-                            color: '#0f172a',
-                            textDecoration: 'none',
-                            fontWeight: 600,
-                          }}
-                          data-testid={`reports-row-${iwo.id}-link`}
-                        >
-                          {iwo.code}
-                        </Link>
-                        <div style={{ marginTop: 2, color: '#64748b', fontSize: 12 }}>
-                          {iwo.state}
-                          {iwo.tier ? ` · ${iwo.tier}` : ''}
+                      {g.total} active · {g.overheating} overheating · {g.avgBurnPct}% avg burn
+                    </div>
+                  </div>
+                </header>
+                {visible.length === 0 ? (
+                  <p
+                    className="zeus-panel-empty"
+                    data-testid={`reports-brand-${g.brandId}-empty`}
+                  >
+                    {g.total === 0
+                      ? 'No active work orders.'
+                      : 'No work orders match this filter.'}
+                  </p>
+                ) : (
+                  <ul className="zeus-row-list">
+                    {visible.map(({ iwo, meter }) => (
+                      <li
+                        key={iwo.id}
+                        data-testid={`reports-row-${iwo.id}`}
+                        className="zeus-row"
+                        style={{ gridTemplateColumns: 'minmax(180px, 220px) 3fr' }}
+                      >
+                        <div>
+                          <Link
+                            to={`/delivery/iwo/${iwo.id}`}
+                            className="zeus-row-link"
+                            data-testid={`reports-row-${iwo.id}-link`}
+                          >
+                            {iwo.code}
+                          </Link>
+                          <div className="zeus-row-sub">
+                            {iwo.state}
+                            {iwo.tier ? ` · ${iwo.tier}` : ''}
+                          </div>
                         </div>
-                      </div>
-                      <BurnMeterBar meter={meter} currency={iwo.currency} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          );
-        })
+                        <BurnMeterBar meter={meter} currency={iwo.currency} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
+        </div>
       )}
     </div>
   );

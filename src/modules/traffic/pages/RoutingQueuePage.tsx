@@ -13,13 +13,18 @@
  * handoff inputs). Override does the same with a different brand
  * and emits a console marker so the override flow is visible during
  * QA (Phase 6.E's unified inbox will persist override decisions).
+ *
+ * Shell re-skin PR 3: the propose form is a soft panel with the
+ * `.zeus-select` capability picker and the refresh-shared `btn`
+ * primary; the error / empty states read as soft tones. The proposal
+ * itself keeps its existing card (RouteBrandProposalCard — already
+ * token-driven).
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FirebaseError } from 'firebase/app';
 import { RefreshCw } from 'lucide-react';
-import { Button } from '@/core/components/ui/button';
 import { BRAND_CAPABILITIES, type Capability, type DeliverySubsidiaryId } from '@/core/settings/brand-capabilities';
 import type { MasterJob } from '@/modules/assignment/types/master-job.types';
 import { RouteBrandProposalCard } from '../components/RouteBrandProposalCard';
@@ -120,7 +125,14 @@ export default function RoutingQueuePage() {
       <div
         role="alert"
         data-testid="routing-queue-error"
-        className="p-4 rounded-md border border-[var(--rag-red)] bg-[var(--rag-red-soft)] text-[var(--rag-red-deep)]"
+        className="zeus-panel"
+        style={{
+          padding: '14px 18px',
+          borderColor: 'color-mix(in oklab, var(--rag-red) 30%, transparent)',
+          background: 'var(--rag-red-soft)',
+          color: 'var(--rag-red-deep, var(--rag-red))',
+          fontSize: 13,
+        }}
       >
         {subscribeError}
       </div>
@@ -128,80 +140,123 @@ export default function RoutingQueuePage() {
   }
 
   return (
-    <section data-testid="routing-queue-page" className="space-y-4">
+    <section
+      data-testid="routing-queue-page"
+      style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+    >
       {visibleJobs.length === 0 ? (
-        <p
+        <div
           data-testid="routing-queue-empty"
-          className="text-[13px] text-[var(--fg-tertiary)] p-4 rounded-md border border-dashed border-[var(--border-default)] text-center"
+          className="zeus-panel"
+          style={{
+            padding: '28px 24px',
+            textAlign: 'center',
+            color: 'var(--fg-tertiary)',
+            fontSize: 13,
+            borderStyle: 'dashed',
+          }}
         >
           No master jobs awaiting routing. Newly opened, unallocated jobs land here.
-        </p>
+        </div>
       ) : (
         visibleJobs.map((job) => {
           const row = rows[job.id];
           if (!row) return null;
           return (
-            <div key={job.id} data-testid={`queue-row-${job.id}`} className="space-y-2">
+            <div key={job.id} data-testid={`queue-row-${job.id}`}>
               {!row.proposal ? (
-                <article className="card card-pad">
-                  <header className="flex items-center justify-between gap-3 mb-3">
-                    <div className="min-w-0">
-                      <p className="text-[14px] font-semibold text-[var(--fg-primary)] truncate">
-                        {job.code || job.id}
-                      </p>
-                      {job.campaign?.clientName && (
-                        <p className="text-[12px] text-[var(--fg-tertiary)] truncate">
-                          {job.campaign.clientName}
-                          {job.campaign.name ? ` · ${job.campaign.name}` : ''}
+                <article className="zeus-panel">
+                  <div className="zeus-panel-pad">
+                    <header
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        marginBottom: 14,
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            color: 'var(--fg-primary)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {job.code || job.id}
                         </p>
-                      )}
-                    </div>
-                  </header>
-                  <div className="flex items-end gap-3">
-                    <label className="flex-1 max-w-[200px]">
-                      <span className="block text-[11px] font-medium uppercase tracking-wide text-[var(--fg-tertiary)] mb-1">
-                        Required capability
-                      </span>
-                      <select
-                        data-testid={`capability-select-${job.id}`}
-                        value={row.capability}
-                        onChange={(e) =>
-                          updateRow(job.id, { capability: e.target.value as Capability })
-                        }
-                        className="w-full h-8 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px]"
+                        {job.campaign?.clientName && (
+                          <p
+                            style={{
+                              margin: '2px 0 0',
+                              fontSize: 12,
+                              color: 'var(--fg-tertiary)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {job.campaign.clientName}
+                            {job.campaign.name ? ` · ${job.campaign.name}` : ''}
+                          </p>
+                        )}
+                      </div>
+                    </header>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10 }}>
+                      <label style={{ flex: 1, maxWidth: 220 }}>
+                        <span className="zeus-field-label">Required capability</span>
+                        <select
+                          data-testid={`capability-select-${job.id}`}
+                          value={row.capability}
+                          onChange={(e) =>
+                            updateRow(job.id, { capability: e.target.value as Capability })
+                          }
+                          className="zeus-select"
+                        >
+                          {ALL_CAPABILITIES.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        data-testid={`propose-btn-${job.id}`}
+                        disabled={row.loading}
+                        onClick={() => requestProposal(job)}
                       >
-                        {ALL_CAPABILITIES.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <Button
-                      size="sm"
-                      data-testid={`propose-btn-${job.id}`}
-                      disabled={row.loading}
-                      onClick={() => requestProposal(job)}
-                    >
-                      {row.loading ? (
-                        <>
-                          <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" aria-hidden="true" />
-                          Routing…
-                        </>
-                      ) : (
-                        'Propose'
-                      )}
-                    </Button>
+                        {row.loading ? (
+                          <>
+                            <RefreshCw size={13} className="animate-spin" aria-hidden="true" />
+                            Routing…
+                          </>
+                        ) : (
+                          'Propose'
+                        )}
+                      </button>
+                    </div>
+                    {row.error && (
+                      <p
+                        role="alert"
+                        data-testid={`propose-error-${job.id}`}
+                        style={{
+                          marginTop: 10,
+                          marginBottom: 0,
+                          fontSize: 12,
+                          color: 'var(--rag-red-deep, var(--rag-red))',
+                        }}
+                      >
+                        {row.error}
+                      </p>
+                    )}
                   </div>
-                  {row.error && (
-                    <p
-                      role="alert"
-                      data-testid={`propose-error-${job.id}`}
-                      className="mt-2 text-[12px] text-[var(--rag-red)]"
-                    >
-                      {row.error}
-                    </p>
-                  )}
                 </article>
               ) : (
                 <RouteBrandProposalCard

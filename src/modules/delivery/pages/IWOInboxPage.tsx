@@ -269,7 +269,7 @@ export default function IWOInboxPage() {
         {showIsolationBanner && (
           <div role="note" data-testid="iwo-inbox-isolation-banner">
             <Banner
-              tone="amber"
+              tone="accent"
               title="Conflict-isolated workspace"
               message="Your clients are not visible to other brands."
             />

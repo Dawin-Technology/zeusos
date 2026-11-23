@@ -8,6 +8,11 @@
  *
  * Threshold is fetched once on mount; if `engine_config/global`
  * doesn't exist yet (pre-6.E), the default applies.
+ *
+ * Shell re-skin PR 3: the threshold rows become a `.zeus-tile-grid`
+ * of soft tiles — one per brand, warn-toned when over the ceiling —
+ * each carrying the `.zeus-burn` fill. The explainer sits inside a
+ * `.zeus-panel-pad` lede so the page reads with a hierarchy.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -16,9 +21,16 @@ import { db } from '@/core/services/firebase/firestore';
 import { ALL_DELIVERY_SUBSIDIARIES } from '@/core/settings/brand-capabilities';
 import type { InternalWorkOrder } from '@/modules/assignment/types/iwo.types';
 import { subscribeActiveIwos } from '../services/traffic.service';
-import { cn } from '@/shared/lib/utils';
 
 const DEFAULT_THRESHOLD = 20;
+
+const BRAND_LABELS: Record<string, string> = {
+  'zeus-the-agency': 'Zeus The Agency',
+  'zeus-digital': 'Zeus Digital',
+  labyrinth: 'Labyrinth',
+  'odd-gorilla': 'Odd Gorilla',
+  'house-of-zeus': 'House of Zeus',
+};
 
 export default function BrandCapacityPage() {
   const [iwos, setIwos] = useState<InternalWorkOrder[]>([]);
@@ -53,46 +65,66 @@ export default function BrandCapacityPage() {
   }, [iwos]);
 
   return (
-    <section data-testid="brand-capacity-page" className="space-y-3">
-      <p className="text-[12px] text-[var(--fg-tertiary)] mb-3">
-        Soft ceiling: <strong>{threshold}</strong> active IWOs per brand. Brands at the
-        ceiling are not excluded by <code>routeBrand</code>, but they are ranked lower.
+    <section
+      data-testid="brand-capacity-page"
+      style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+    >
+      <p
+        style={{
+          fontSize: 12.5,
+          color: 'var(--fg-secondary)',
+          margin: 0,
+          lineHeight: 1.5,
+        }}
+      >
+        Soft ceiling:{' '}
+        <strong style={{ color: 'var(--fg-primary)' }}>{threshold}</strong> active IWOs per
+        brand. Brands at the ceiling are not excluded by{' '}
+        <code
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11.5,
+            background: 'var(--bg-sunken)',
+            padding: '1px 6px',
+            borderRadius: 4,
+          }}
+        >
+          routeBrand
+        </code>
+        , but they are ranked lower.
       </p>
-      <ul className="space-y-2">
+
+      <ul
+        className="zeus-tile-grid"
+        style={{ listStyle: 'none', padding: 0, margin: 0 }}
+      >
         {ALL_DELIVERY_SUBSIDIARIES.map((brandId) => {
           const open = counts[brandId];
           const pct = Math.min(100, Math.round((open / threshold) * 100));
           const overflow = open >= threshold;
+          const fillTone = overflow ? 'over' : pct >= 80 ? 'warn' : '';
+          const label = BRAND_LABELS[brandId] ?? brandId;
           return (
             <li
               key={brandId}
               data-testid={`capacity-row-${brandId}`}
-              className="rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] p-3"
+              className={`zeus-tile${overflow ? ' warn' : ''}`}
             >
-              <header className="flex items-baseline justify-between mb-1.5">
-                <p className="text-[13px] font-medium text-[var(--fg-primary)]">{brandId}</p>
-                <p className="text-[12px] text-[var(--fg-tertiary)]">
+              <span className="zeus-tile-label">{label}</span>
+              <span
+                className="zeus-tile-value"
+                data-testid={`capacity-count-${brandId}`}
+              >
+                {open}
+                <span className="zeus-tile-unit">/ {threshold}</span>
+              </span>
+              <div className="zeus-burn" style={{ marginTop: 4 }}>
+                <div className="zeus-burn-track">
                   <span
-                    data-testid={`capacity-count-${brandId}`}
-                    className={overflow ? 'text-[var(--rag-red)] font-medium' : undefined}
-                  >
-                    {open}
-                  </span>{' '}
-                  / {threshold}
-                </p>
-              </header>
-              <div className="w-full h-2 rounded-full bg-[var(--bg-sunken)] overflow-hidden">
-                <div
-                  className={cn(
-                    'h-full transition-all',
-                    overflow
-                      ? 'bg-[var(--rag-red)]'
-                      : pct >= 80
-                        ? 'bg-[var(--rag-amber)]'
-                        : 'bg-[var(--rag-green)]',
-                  )}
-                  style={{ width: `${pct}%` }}
-                />
+                    className={`zeus-burn-fill${fillTone ? ' ' + fillTone : ''}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
               </div>
             </li>
           );

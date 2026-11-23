@@ -1,4 +1,4 @@
-/* eslint-disable design-system/no-inline-style-literals -- TODO(U.4): early Phase 6.UI.D.2 scaffolding mirrors IWOInboxPage; full Tailwind token refactor scheduled with the U.4 sweep. */
+/* eslint-disable design-system/no-inline-style-literals -- soft-skin re-skin PR 3 keeps many inline CSS vars while the shell primitives are still growing; full migration lands with the U.4 sweep. */
 /**
  * BurnAndSlaPage — `/delivery/burn`.
  *
@@ -20,9 +20,11 @@
  *     unset; the column shows "—".
  *
  * Layout:
- *   1. Filter chips (All / Overheating / On-track) + a count badge.
- *   2. One row per IWO, sorted by burn status (BLOCKED → WARN →
- *      OK), each with the existing `BurnMeterBar` visualization.
+ *   1. Portfolio tiles (total · overheating · on-track).
+ *   2. Filter chips (All / Overheating / On-track) mirroring the chips
+ *      on `/reports` so the two surfaces feel like siblings.
+ *   3. One row per IWO inside a `.zeus-panel`, sorted BLOCKED → WARN →
+ *      OK, each with the existing `BurnMeterBar` visualization.
  *
  * Read access is the same as IWOInboxPage: gated by
  * `SubsidiaryDeliveryGuard` at the router level. Parent-org admins
@@ -91,11 +93,9 @@ function buildRow(iwo: InternalWorkOrder, now: number): BurnRow {
 function sortRows(a: BurnRow, b: BurnRow): number {
   const rank = STATUS_RANK[a.meter.status] - STATUS_RANK[b.meter.status];
   if (rank !== 0) return rank;
-  // Same bucket — higher burn first.
   if (a.meter.percentage !== b.meter.percentage) {
     return b.meter.percentage - a.meter.percentage;
   }
-  // Same burn — tighter SLA first (negative = overdue ranks earliest).
   const aSla = a.slaHoursLeft ?? Number.POSITIVE_INFINITY;
   const bSla = b.slaHoursLeft ?? Number.POSITIVE_INFINITY;
   return aSla - bSla;
@@ -156,11 +156,12 @@ export default function BurnAndSlaPage() {
 
   if (!homeSub) {
     return (
-      <div style={{ padding: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600 }}>Burn &amp; SLA</h1>
-        <p style={{ color: '#475569' }}>
-          You don&apos;t appear to have access to any operating subsidiary. Speak to your administrator.
-        </p>
+      <div style={{ padding: 'var(--pad-page)' }}>
+        <PageHero
+          eyebrow="Delivery"
+          title="Burn & SLA"
+          body="You don't appear to have access to any operating subsidiary. Speak to your administrator."
+        />
       </div>
     );
   }
@@ -179,14 +180,14 @@ export default function BurnAndSlaPage() {
         <div
           role="note"
           data-testid="burn-sla-isolation-banner"
+          className="zeus-panel"
           style={{
             padding: '10px 14px',
             marginBottom: 16,
-            borderRadius: 6,
-            background: 'var(--rag-amber-soft, #fef3c7)',
-            color: 'var(--rag-amber-deep, #78350f)',
-            border: '1px solid var(--rag-amber, #f59e0b)',
-            fontSize: 13,
+            background: 'var(--accent-soft)',
+            borderColor: 'color-mix(in oklab, var(--accent) 24%, transparent)',
+            color: 'var(--fg-primary)',
+            fontSize: 12.5,
             fontWeight: 500,
           }}
         >
@@ -195,18 +196,46 @@ export default function BurnAndSlaPage() {
       )}
 
       {err && (
-        <div role="alert" data-testid="burn-sla-error" style={{
-          padding: 12, marginBottom: 16, borderRadius: 6,
-          background: '#fef2f2', color: '#7f1d1d', border: '1px solid #fecaca',
-        }}>
+        <div
+          role="alert"
+          data-testid="burn-sla-error"
+          className="zeus-panel"
+          style={{
+            padding: '12px 16px',
+            marginBottom: 16,
+            borderColor: 'color-mix(in oklab, var(--rag-red) 30%, transparent)',
+            background: 'var(--rag-red-soft)',
+            color: 'var(--rag-red-deep, var(--rag-red))',
+            fontSize: 13,
+          }}
+        >
           {err}
         </div>
       )}
 
+      {/* Portfolio tiles — same shape as /reports so the two surfaces feel like siblings. */}
+      <ul
+        className="zeus-tile-grid"
+        style={{ listStyle: 'none', padding: 0, margin: '0 0 16px' }}
+      >
+        <li className="zeus-tile">
+          <span className="zeus-tile-label">Active IWOs</span>
+          <span className="zeus-tile-value">{counts.all}</span>
+        </li>
+        <li className={`zeus-tile${counts.overheating > 0 ? ' warn' : ''}`}>
+          <span className="zeus-tile-label">Overheating</span>
+          <span className="zeus-tile-value">{counts.overheating}</span>
+        </li>
+        <li className="zeus-tile">
+          <span className="zeus-tile-label">On-track</span>
+          <span className="zeus-tile-value">{counts.onTrack}</span>
+        </li>
+      </ul>
+
       <div
         role="tablist"
         aria-label="Filter active IWOs"
-        style={{ display: 'flex', gap: 8, marginBottom: 16 }}
+        style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}
       >
         {(['all', 'overheating', 'on-track'] as Filter[]).map(key => {
           const count = key === 'all'
@@ -224,72 +253,83 @@ export default function BurnAndSlaPage() {
               type="button"
               data-testid={`burn-sla-filter-${key}`}
               onClick={() => setFilter(key)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 999,
-                border: active ? '1px solid #0f172a' : '1px solid #e2e8f0',
-                background: active ? '#0f172a' : '#fff',
-                color: active ? '#fff' : '#0f172a',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: 500,
-              }}
+              className={`zui-chip${active ? ' active' : ''}`}
             >
-              {label} <span data-testid={`burn-sla-count-${key}`}>({count})</span>
+              {label}{' '}
+              <span
+                data-testid={`burn-sla-count-${key}`}
+                style={{ opacity: 0.75, fontWeight: 500, marginLeft: 2 }}
+              >
+                ({count})
+              </span>
             </button>
           );
         })}
       </div>
 
       {filtered.length === 0 ? (
-        <p style={{ color: '#64748b', fontSize: 13 }} data-testid="burn-sla-empty">
+        <div
+          data-testid="burn-sla-empty"
+          className="zeus-panel"
+          style={{
+            padding: '24px 20px',
+            textAlign: 'center',
+            color: 'var(--fg-tertiary)',
+            fontSize: 13,
+            borderStyle: 'dashed',
+          }}
+        >
           {rows.length === 0
             ? 'No active work orders.'
             : 'No work orders match this filter.'}
-        </p>
+        </div>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }} data-testid="burn-sla-list">
-          {filtered.map(({ iwo, meter, slaHoursLeft }) => (
-            <li
-              key={iwo.id}
-              data-testid={`burn-sla-row-${iwo.id}`}
-              style={{
-                padding: '14px 0',
-                borderBottom: '1px solid #f1f5f9',
-                display: 'grid',
-                gridTemplateColumns: 'minmax(140px, 1fr) 2fr minmax(120px, auto)',
-                gap: 16,
-                alignItems: 'center',
-              }}
-            >
-              <div>
-                <Link
-                  to={`/delivery/iwo/${iwo.id}`}
-                  style={{ fontFamily: 'monospace', color: '#0f172a', textDecoration: 'none', fontWeight: 600 }}
-                  data-testid={`burn-sla-row-${iwo.id}-link`}
-                >
-                  {iwo.code}
-                </Link>
-                <div style={{ marginTop: 2, color: '#64748b', fontSize: 12 }}>
-                  {iwo.state}
-                  {iwo.tier ? ` · ${iwo.tier}` : ''}
-                </div>
-              </div>
-              <BurnMeterBar meter={meter} currency={iwo.currency} />
-              <div
-                style={{
-                  fontSize: 12,
-                  color: slaHoursLeft !== null && slaHoursLeft < 0 ? '#7f1d1d' : '#475569',
-                  textAlign: 'right',
-                  fontWeight: slaHoursLeft !== null && slaHoursLeft < 24 ? 600 : 400,
-                }}
-                data-testid={`burn-sla-row-${iwo.id}-sla`}
+        <div className="zeus-panel">
+          <ul
+            className="zeus-row-list"
+            data-testid="burn-sla-list"
+          >
+            {filtered.map(({ iwo, meter, slaHoursLeft }) => (
+              <li
+                key={iwo.id}
+                data-testid={`burn-sla-row-${iwo.id}`}
+                className="zeus-row"
+                style={{ gridTemplateColumns: 'minmax(180px, 220px) 2fr minmax(110px, auto)' }}
               >
-                {formatSla(slaHoursLeft)}
-              </div>
-            </li>
-          ))}
-        </ul>
+                <div>
+                  <Link
+                    to={`/delivery/iwo/${iwo.id}`}
+                    className="zeus-row-link"
+                    data-testid={`burn-sla-row-${iwo.id}-link`}
+                  >
+                    {iwo.code}
+                  </Link>
+                  <div className="zeus-row-sub">
+                    {iwo.state}
+                    {iwo.tier ? ` · ${iwo.tier}` : ''}
+                  </div>
+                </div>
+                <BurnMeterBar meter={meter} currency={iwo.currency} />
+                <div
+                  style={{
+                    fontSize: 12,
+                    color:
+                      slaHoursLeft !== null && slaHoursLeft < 0
+                        ? 'var(--rag-red-deep, var(--rag-red))'
+                        : 'var(--fg-secondary)',
+                    textAlign: 'right',
+                    fontWeight:
+                      slaHoursLeft !== null && slaHoursLeft < 24 ? 600 : 400,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                  data-testid={`burn-sla-row-${iwo.id}-sla`}
+                >
+                  {formatSla(slaHoursLeft)}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

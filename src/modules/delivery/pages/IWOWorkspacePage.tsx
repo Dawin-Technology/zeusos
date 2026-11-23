@@ -1,4 +1,4 @@
-/* eslint-disable design-system/no-inline-style-literals -- TODO(U.4): early Phase 3.E scaffolding, uses inline px + hex throughout. Real Tailwind/token refactor scheduled for U.4. */
+/* eslint-disable design-system/no-inline-style-literals -- soft-skin re-skin PR 3 keeps many inline tokens (CSS vars) while the shell primitives are still growing; full migration lands with the U.4 sweep. */
 /**
  * IWOWorkspacePage — the per-IWO subsidiary workspace.
  *
@@ -20,6 +20,12 @@
  * billing UI. Spec §7.4 boundary, Layer 1 (auth) keeps subsidiary users
  * out of those routes if they URL-hop; this page is the "what they
  * actually see" half.
+ *
+ * Shell re-skin PR 3: every raw-hex panel moves to `.zeus-panel`;
+ * every form field uses `.zeus-field-label` + `.zeus-select` /
+ * `.zeus-input`; every button maps onto the refresh `btn` classes.
+ * Burn meter sits prominently at the top. Behaviour, data wiring,
+ * and `data-testid`s are unchanged.
  */
 
 import { useMemo, useState } from 'react';
@@ -68,6 +74,13 @@ function formatTimestamp(ts: HandoffPacket['createdAt'] | undefined | null): str
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+const SECTION_TITLE: React.CSSProperties = {
+  margin: 0,
+  font: '600 14px var(--font-sans)',
+  letterSpacing: '-0.01em',
+  color: 'var(--fg-primary)',
+};
 
 export default function IWOWorkspacePage() {
   const { id } = useParams<{ id: string }>();
@@ -129,7 +142,7 @@ export default function IWOWorkspacePage() {
     return <div style={{ padding: 24 }}>Missing IWO id.</div>;
   }
   if (!iwo) {
-    return <div style={{ padding: 24 }}>Loading work order…</div>;
+    return <div style={{ padding: 24, color: 'var(--fg-tertiary)' }}>Loading work order…</div>;
   }
 
   const handleStart = async () => {
@@ -232,7 +245,10 @@ export default function IWOWorkspacePage() {
   const canStart = iwo.state === 'ACCEPTED';
 
   return (
-    <div style={{ padding: 'var(--pad-page)', maxWidth: 960, margin: '0 auto' }} data-testid="iwo-workspace-page">
+    <div
+      style={{ padding: 'var(--pad-page)', maxWidth: 960, margin: '0 auto' }}
+      data-testid="iwo-workspace-page"
+    >
       <span data-testid="iwo-back-to-inbox">
         <BackBar label="Inbox" onBack={() => navigate('/delivery/inbox')} />
       </span>
@@ -242,76 +258,42 @@ export default function IWOWorkspacePage() {
         <h1 className="display mono" data-testid="iwo-code">{iwo.code}</h1>
         <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center' }}>
           <Pill tone="blue"><span data-testid="iwo-state">{iwo.state}</span></Pill>
-          <span data-testid="iwo-budget" className="tabular" style={{ fontSize: 12.5, color: 'var(--fg-tertiary)' }}>
+          <span
+            data-testid="iwo-budget"
+            className="tabular"
+            style={{ fontSize: 12.5, color: 'var(--fg-tertiary)' }}
+          >
             Budget: {formatMinor(iwo.budgetMinor, iwo.currency)}
           </span>
         </div>
       </div>
 
       {err && (
-        <div role="alert" style={{
-          padding: 12, marginBottom: 16, borderRadius: 6,
-          background: '#fef2f2', color: '#7f1d1d', border: '1px solid #fecaca',
-        }}>
+        <div
+          role="alert"
+          className="zeus-panel"
+          style={{
+            padding: '12px 16px',
+            marginBottom: 16,
+            borderColor: 'color-mix(in oklab, var(--rag-red) 30%, transparent)',
+            background: 'var(--rag-red-soft)',
+            color: 'var(--rag-red-deep, var(--rag-red))',
+            fontSize: 13,
+          }}
+        >
           {err}
         </div>
       )}
 
-      <section style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Handoff packet</h2>
-        {packet ? (
-          <div style={{
-            padding: 16, borderRadius: 6,
-            background: '#f8fafc', border: '1px solid #e2e8f0',
-          }}>
-            <div style={{ fontSize: 13, color: '#475569', marginBottom: 8 }}>
-              Comms owner (Account Management): <strong>{packet.commsOwnerUserId}</strong>
-              {' '}— the subsidiary does not contact the client directly.
-            </div>
-            <details>
-              <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Brief</summary>
-              <pre style={{
-                whiteSpace: 'pre-wrap', fontFamily: 'inherit',
-                marginTop: 8, fontSize: 13, color: '#1f2937',
-              }}>
-                {packet.briefMd}
-              </pre>
-            </details>
-            <h3 style={{ fontSize: 13, fontWeight: 600, marginTop: 16, marginBottom: 4 }}>
-              Milestones
-            </h3>
-            <ul style={{ listStyle: 'disc', paddingLeft: 20, fontSize: 13, color: '#1f2937' }}>
-              {packet.milestones.map((m) => (
-                <li key={m.id}>
-                  {m.name} — due {formatTimestamp(m.dueDate)}
-                  {m.completedAt ? ' (complete)' : ''}
-                </li>
-              ))}
-            </ul>
-            <h3 style={{ fontSize: 13, fontWeight: 600, marginTop: 12, marginBottom: 4 }}>
-              Acceptance criteria
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, fontSize: 13, color: '#1f2937' }}>
-              {packet.acceptanceCriteria.map((c) => (
-                <li key={c.id} style={{ padding: '4px 0' }}>
-                  <span style={{ color: c.signedByUserId ? '#15803d' : '#475569' }}>
-                    {c.signedByUserId ? '✓' : '○'}
-                  </span>
-                  {' '}{c.description}
-                  {c.required ? <em style={{ marginLeft: 6, color: '#7f1d1d' }}>required</em> : null}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <p style={{ fontSize: 13, color: '#64748b' }}>No handoff packet attached yet.</p>
-        )}
-      </section>
-
+      {/* Burn meter — hero slot: drives every "can I post?" decision below. */}
       {meter && (
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Burn</h2>
-          <BurnMeterBar meter={meter} currency={iwo.currency} />
+        <section className="zeus-panel" style={{ marginBottom: 20 }}>
+          <header className="zeus-panel-head">
+            <h2>Burn</h2>
+          </header>
+          <div className="zeus-panel-pad">
+            <BurnMeterBar meter={meter} currency={iwo.currency} />
+          </div>
         </section>
       )}
 
@@ -319,23 +301,144 @@ export default function IWOWorkspacePage() {
           transitions IN_PROGRESS → DELIVERED. Until then the chain
           isn't initialised and we hide the panel. */}
       {iwo.approvalChain && (
-        <section style={{ marginBottom: 24 }} data-testid="iwo-approval-ladder-section">
+        <section
+          style={{ marginBottom: 20 }}
+          data-testid="iwo-approval-ladder-section"
+        >
           <ApprovalLadderPanel iwoId={iwo.id} chain={iwo.approvalChain} />
         </section>
       )}
 
+      <section className="zeus-panel" style={{ marginBottom: 20 }}>
+        <header className="zeus-panel-head">
+          <h2>Handoff packet</h2>
+        </header>
+        <div className="zeus-panel-pad">
+          {packet ? (
+            <>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: 'var(--fg-secondary)',
+                  marginBottom: 10,
+                }}
+              >
+                Comms owner (Account Management):{' '}
+                <strong style={{ color: 'var(--fg-primary)' }}>{packet.commsOwnerUserId}</strong>
+                {' '}— the subsidiary does not contact the client directly.
+              </div>
+              <details>
+                <summary
+                  style={{
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    color: 'var(--fg-primary)',
+                  }}
+                >
+                  Brief
+                </summary>
+                <pre
+                  style={{
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'inherit',
+                    marginTop: 8,
+                    fontSize: 13,
+                    color: 'var(--fg-primary)',
+                    background: 'var(--bg-sunken)',
+                    padding: 12,
+                    borderRadius: 10,
+                  }}
+                >
+                  {packet.briefMd}
+                </pre>
+              </details>
+              <h3
+                style={{
+                  ...SECTION_TITLE,
+                  fontSize: 12.5,
+                  marginTop: 16,
+                  marginBottom: 6,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--fg-tertiary)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                Milestones
+              </h3>
+              <ul
+                style={{
+                  listStyle: 'disc',
+                  paddingLeft: 20,
+                  fontSize: 13,
+                  color: 'var(--fg-primary)',
+                  margin: 0,
+                }}
+              >
+                {packet.milestones.map((m) => (
+                  <li key={m.id} style={{ marginBottom: 2 }}>
+                    {m.name} — due {formatTimestamp(m.dueDate)}
+                    {m.completedAt ? ' (complete)' : ''}
+                  </li>
+                ))}
+              </ul>
+              <h3
+                style={{
+                  ...SECTION_TITLE,
+                  fontSize: 12.5,
+                  marginTop: 14,
+                  marginBottom: 6,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--fg-tertiary)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                Acceptance criteria
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, fontSize: 13, color: 'var(--fg-primary)', margin: 0 }}>
+                {packet.acceptanceCriteria.map((c) => (
+                  <li key={c.id} style={{ padding: '4px 0', display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ color: c.signedByUserId ? 'var(--rag-green)' : 'var(--fg-tertiary)' }}>
+                      {c.signedByUserId ? '✓' : '○'}
+                    </span>
+                    {c.description}
+                    {c.required ? (
+                      <em
+                        style={{
+                          marginLeft: 6,
+                          color: 'var(--rag-red-deep, var(--rag-red))',
+                          fontStyle: 'normal',
+                          fontSize: 11,
+                          fontWeight: 500,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.06em',
+                        }}
+                      >
+                        required
+                      </em>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p style={{ fontSize: 13, color: 'var(--fg-tertiary)', margin: 0 }}>
+              No handoff packet attached yet.
+            </p>
+          )}
+        </div>
+      </section>
+
       {canStart && (
-        <section style={{ marginBottom: 24 }}>
+        <section style={{ marginBottom: 20 }}>
           <button
             type="button"
             data-testid="iwo-start"
             onClick={handleStart}
             disabled={busy}
-            style={{
-              padding: '8px 14px', borderRadius: 6, border: 'none',
-              background: '#1d4ed8', color: '#fff', fontWeight: 600,
-              cursor: busy ? 'wait' : 'pointer',
-            }}
+            className="btn btn-primary"
           >
             Start work (move to IN_PROGRESS)
           </button>
@@ -344,194 +447,270 @@ export default function IWOWorkspacePage() {
 
       {iwo.state === 'IN_PROGRESS' && (
         <>
-          <section style={{ marginBottom: 24 }} data-testid="iwo-post-time-section">
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Post time</h2>
-            <form onSubmit={handlePostTime} style={{ display: 'grid', gap: 8, maxWidth: 480 }} data-testid="iwo-post-time-form">
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                Date
-                <input
-                  data-testid="te-date"
-                  type="date"
-                  value={teDate}
-                  onChange={(e) => setTeDate(e.target.value)}
-                  required
-                  style={{ display: 'block', padding: 6, marginTop: 2, width: '100%' }}
-                />
-              </label>
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                Minutes
-                <input
-                  data-testid="te-minutes"
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={teMinutes}
-                  onChange={(e) => setTeMinutes(e.target.value)}
-                  required
-                  style={{ display: 'block', padding: 6, marginTop: 2, width: '100%' }}
-                />
-              </label>
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                Note (optional)
-                <input
-                  data-testid="te-note"
-                  type="text"
-                  value={teNote}
-                  onChange={(e) => setTeNote(e.target.value)}
-                  style={{ display: 'block', padding: 6, marginTop: 2, width: '100%' }}
-                />
-              </label>
-              <button
-                type="submit"
-                data-testid="te-submit"
-                disabled={!canPostEntries || busy}
-                style={{
-                  padding: '8px 14px', borderRadius: 6, border: 'none',
-                  background: canPostEntries ? '#1d4ed8' : '#94a3b8',
-                  color: '#fff', fontWeight: 600,
-                  cursor: !canPostEntries || busy ? 'not-allowed' : 'pointer',
-                  marginTop: 4,
-                }}
+          <section
+            className="zeus-panel"
+            style={{ marginBottom: 20 }}
+            data-testid="iwo-post-time-section"
+          >
+            <header className="zeus-panel-head">
+              <h2>Post time</h2>
+            </header>
+            <div className="zeus-panel-pad">
+              <form
+                onSubmit={handlePostTime}
+                style={{ display: 'grid', gap: 12, maxWidth: 480 }}
+                data-testid="iwo-post-time-form"
               >
-                Post time
-              </button>
-            </form>
-          </section>
-
-          <section style={{ marginBottom: 24 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Post cost</h2>
-            <form onSubmit={handlePostCost} style={{ display: 'grid', gap: 8, maxWidth: 480 }}>
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                Kind
-                <select
-                  value={ceKind}
-                  onChange={(e) => setCeKind(e.target.value as CostEntryKindForApi)}
-                  style={{ display: 'block', padding: 6, marginTop: 2, width: '100%' }}
+                <label>
+                  <span className="zeus-field-label">Date</span>
+                  <input
+                    data-testid="te-date"
+                    type="date"
+                    value={teDate}
+                    onChange={(e) => setTeDate(e.target.value)}
+                    required
+                    className="zeus-input"
+                  />
+                </label>
+                <label>
+                  <span className="zeus-field-label">Minutes</span>
+                  <input
+                    data-testid="te-minutes"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={teMinutes}
+                    onChange={(e) => setTeMinutes(e.target.value)}
+                    required
+                    className="zeus-input"
+                  />
+                </label>
+                <label>
+                  <span className="zeus-field-label">Note (optional)</span>
+                  <input
+                    data-testid="te-note"
+                    type="text"
+                    value={teNote}
+                    onChange={(e) => setTeNote(e.target.value)}
+                    className="zeus-input"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  data-testid="te-submit"
+                  disabled={!canPostEntries || busy}
+                  className="btn btn-primary"
+                  style={{ justifySelf: 'start' }}
                 >
-                  <option value="VENDOR">Vendor</option>
-                  <option value="MEDIA_SPEND">Media spend</option>
-                  <option value="EXPENSE">Expense</option>
-                </select>
-              </label>
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                Amount ({iwo.currency}, decimal)
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={ceAmount}
-                  onChange={(e) => setCeAmount(e.target.value)}
-                  required
-                  style={{ display: 'block', padding: 6, marginTop: 2, width: '100%' }}
-                />
-              </label>
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                Description (optional)
-                <input
-                  type="text"
-                  value={ceDesc}
-                  onChange={(e) => setCeDesc(e.target.value)}
-                  style={{ display: 'block', padding: 6, marginTop: 2, width: '100%' }}
-                />
-              </label>
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                <input
-                  type="checkbox"
-                  checked={cePassThrough}
-                  onChange={(e) => setCePassThrough(e.target.checked)}
-                  style={{ marginRight: 6 }}
-                />
-                Pass-through (rebilled at cost to client)
-              </label>
-              <button
-                type="submit"
-                disabled={!canPostEntries || busy}
-                style={{
-                  padding: '8px 14px', borderRadius: 6, border: 'none',
-                  background: canPostEntries ? '#1d4ed8' : '#94a3b8',
-                  color: '#fff', fontWeight: 600,
-                  cursor: !canPostEntries || busy ? 'not-allowed' : 'pointer',
-                  marginTop: 4,
-                }}
-              >
-                Post cost
-              </button>
-            </form>
+                  Post time
+                </button>
+              </form>
+            </div>
           </section>
 
-          <section style={{ marginBottom: 24 }} data-testid="iwo-submit-deliverable-section">
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Submit deliverable</h2>
-            <form onSubmit={handleSubmitDeliverable} style={{ display: 'grid', gap: 8, maxWidth: 480 }} data-testid="iwo-submit-deliverable-form">
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                Asset ids (comma or whitespace separated; ≥1 required)
-                <input
-                  data-testid="del-asset-ids"
-                  type="text"
-                  value={delAssetIds}
-                  onChange={(e) => setDelAssetIds(e.target.value)}
-                  required
-                  style={{ display: 'block', padding: 6, marginTop: 2, width: '100%' }}
-                />
-              </label>
-              <label style={{ fontSize: 12, color: '#475569' }}>
-                Description (optional)
-                <input
-                  data-testid="del-desc"
-                  type="text"
-                  value={delDesc}
-                  onChange={(e) => setDelDesc(e.target.value)}
-                  style={{ display: 'block', padding: 6, marginTop: 2, width: '100%' }}
-                />
-              </label>
-              <button
-                type="submit"
-                data-testid="iwo-deliver"
-                disabled={!canSubmitDeliverable || busy}
-                style={{
-                  padding: '8px 14px', borderRadius: 6, border: 'none',
-                  background: canSubmitDeliverable ? '#15803d' : '#94a3b8',
-                  color: '#fff', fontWeight: 600,
-                  cursor: !canSubmitDeliverable || busy ? 'not-allowed' : 'pointer',
-                  marginTop: 4,
-                }}
+          <section className="zeus-panel" style={{ marginBottom: 20 }}>
+            <header className="zeus-panel-head">
+              <h2>Post cost</h2>
+            </header>
+            <div className="zeus-panel-pad">
+              <form
+                onSubmit={handlePostCost}
+                style={{ display: 'grid', gap: 12, maxWidth: 480 }}
               >
-                Submit deliverable
-              </button>
-            </form>
+                <label>
+                  <span className="zeus-field-label">Kind</span>
+                  <select
+                    value={ceKind}
+                    onChange={(e) => setCeKind(e.target.value as CostEntryKindForApi)}
+                    className="zeus-select"
+                  >
+                    <option value="VENDOR">Vendor</option>
+                    <option value="MEDIA_SPEND">Media spend</option>
+                    <option value="EXPENSE">Expense</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="zeus-field-label">Amount ({iwo.currency}, decimal)</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={ceAmount}
+                    onChange={(e) => setCeAmount(e.target.value)}
+                    required
+                    className="zeus-input"
+                  />
+                </label>
+                <label>
+                  <span className="zeus-field-label">Description (optional)</span>
+                  <input
+                    type="text"
+                    value={ceDesc}
+                    onChange={(e) => setCeDesc(e.target.value)}
+                    className="zeus-input"
+                  />
+                </label>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: 12.5,
+                    color: 'var(--fg-secondary)',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={cePassThrough}
+                    onChange={(e) => setCePassThrough(e.target.checked)}
+                  />
+                  Pass-through (rebilled at cost to client)
+                </label>
+                <button
+                  type="submit"
+                  disabled={!canPostEntries || busy}
+                  className="btn btn-primary"
+                  style={{ justifySelf: 'start' }}
+                >
+                  Post cost
+                </button>
+              </form>
+            </div>
+          </section>
+
+          <section
+            className="zeus-panel"
+            style={{ marginBottom: 20 }}
+            data-testid="iwo-submit-deliverable-section"
+          >
+            <header className="zeus-panel-head">
+              <h2>Submit deliverable</h2>
+            </header>
+            <div className="zeus-panel-pad">
+              <form
+                onSubmit={handleSubmitDeliverable}
+                style={{ display: 'grid', gap: 12, maxWidth: 480 }}
+                data-testid="iwo-submit-deliverable-form"
+              >
+                <label>
+                  <span className="zeus-field-label">
+                    Asset ids (comma or whitespace separated; ≥1 required)
+                  </span>
+                  <input
+                    data-testid="del-asset-ids"
+                    type="text"
+                    value={delAssetIds}
+                    onChange={(e) => setDelAssetIds(e.target.value)}
+                    required
+                    className="zeus-input"
+                  />
+                </label>
+                <label>
+                  <span className="zeus-field-label">Description (optional)</span>
+                  <input
+                    data-testid="del-desc"
+                    type="text"
+                    value={delDesc}
+                    onChange={(e) => setDelDesc(e.target.value)}
+                    className="zeus-input"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  data-testid="iwo-deliver"
+                  disabled={!canSubmitDeliverable || busy}
+                  className="btn btn-accept"
+                  style={{ justifySelf: 'start', padding: '7px 12px', fontSize: 13, fontWeight: 500 }}
+                >
+                  Submit deliverable
+                </button>
+              </form>
+            </div>
           </section>
         </>
       )}
 
-      <section style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
-          Recent entries
-        </h2>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16,
-        }}>
+      <section className="zeus-panel" style={{ marginBottom: 20 }}>
+        <header className="zeus-panel-head">
+          <h2>Recent entries</h2>
+        </header>
+        <div
+          className="zeus-panel-pad"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}
+        >
           <div>
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+            <h3
+              style={{
+                margin: '0 0 6px',
+                font: '600 10.5px var(--font-mono)',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--fg-tertiary)',
+              }}
+            >
               Time ({timeEntries.length})
             </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 12 }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 12.5 }}>
               {timeEntries.slice(0, 6).map((te) => (
-                <li key={te.id} style={{ padding: '4px 0', borderBottom: '1px solid #f1f5f9' }}>
+                <li
+                  key={te.id}
+                  style={{
+                    padding: '6px 0',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    color: 'var(--fg-primary)',
+                  }}
+                >
                   {te.minutes} min · {formatMinor(te.costMinor, te.currency)}
-                  {te.note ? <em style={{ marginLeft: 6, color: '#475569' }}>{te.note}</em> : null}
+                  {te.note ? (
+                    <em
+                      style={{
+                        marginLeft: 6,
+                        color: 'var(--fg-tertiary)',
+                        fontStyle: 'normal',
+                      }}
+                    >
+                      {te.note}
+                    </em>
+                  ) : null}
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+            <h3
+              style={{
+                margin: '0 0 6px',
+                font: '600 10.5px var(--font-mono)',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--fg-tertiary)',
+              }}
+            >
               Cost ({costEntries.length})
             </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 12 }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 12.5 }}>
               {costEntries.slice(0, 6).map((ce) => (
-                <li key={ce.id} style={{ padding: '4px 0', borderBottom: '1px solid #f1f5f9' }}>
+                <li
+                  key={ce.id}
+                  style={{
+                    padding: '6px 0',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    color: 'var(--fg-primary)',
+                  }}
+                >
                   {ce.kind} · {formatMinor(ce.amountMinor, ce.currency)}
                   {ce.isPassThrough ? ' (pass-through)' : ''}
-                  {ce.description ? <em style={{ marginLeft: 6, color: '#475569' }}>{ce.description}</em> : null}
+                  {ce.description ? (
+                    <em
+                      style={{
+                        marginLeft: 6,
+                        color: 'var(--fg-tertiary)',
+                        fontStyle: 'normal',
+                      }}
+                    >
+                      {ce.description}
+                    </em>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -539,43 +718,82 @@ export default function IWOWorkspacePage() {
         </div>
       </section>
 
-      <section style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
-          Deliverables ({deliverables.length})
-        </h2>
-        {deliverables.length === 0 ? (
-          <p style={{ fontSize: 13, color: '#64748b' }}>None submitted yet.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13 }}>
-            {deliverables.map((d) => (
-              <li key={d.id} style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
-                <strong>{d.name || d.id}</strong> · {d.state}
-                {d.description ? <span style={{ marginLeft: 6, color: '#475569' }}>{d.description}</span> : null}
-              </li>
-            ))}
-          </ul>
-        )}
+      <section className="zeus-panel" style={{ marginBottom: 20 }}>
+        <header className="zeus-panel-head">
+          <h2>Deliverables ({deliverables.length})</h2>
+        </header>
+        <div className="zeus-panel-pad">
+          {deliverables.length === 0 ? (
+            <p style={{ fontSize: 13, color: 'var(--fg-tertiary)', margin: 0 }}>
+              None submitted yet.
+            </p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13 }}>
+              {deliverables.map((d) => (
+                <li
+                  key={d.id}
+                  style={{
+                    padding: '8px 0',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    color: 'var(--fg-primary)',
+                  }}
+                >
+                  <strong>{d.name || d.id}</strong> ·{' '}
+                  <span style={{ color: 'var(--fg-secondary)' }}>{d.state}</span>
+                  {d.description ? (
+                    <span style={{ marginLeft: 6, color: 'var(--fg-tertiary)' }}>
+                      {d.description}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
 
       {/* Spec §7.4 Layer 3 — the ONLY available action for a subsidiary
           user faced with a direct client request. No path to a quote,
           contract, or invoice exists from this page. */}
-      <section style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
-          Client got in touch directly?
-        </h2>
-        <p style={{ fontSize: 12, color: '#475569', marginTop: 0, marginBottom: 8 }}>
-          The subsidiary does not answer the client on price, scope, or contract. Route the request to Account Management — they'll handle it.
-        </p>
-        {dawinUser && (
-          <RouteToAMButton
-            receivingSubsidiaryOrgId={iwo.subsidiaryOrgId}
-            masterJobId={iwo.masterJobId}
-            clientId={iwo.masterJobId}
-            routedToUserId={packet?.commsOwnerUserId ?? ''}
-            defaultNote={`Re: ${iwo.code} — `}
-          />
-        )}
+      <section
+        className="zeus-panel"
+        style={{
+          marginTop: 24,
+          background: 'var(--accent-soft)',
+          borderColor: 'color-mix(in oklab, var(--accent) 22%, transparent)',
+        }}
+      >
+        <div className="zeus-panel-pad">
+          <h2
+            style={{
+              margin: 0,
+              font: '600 14px var(--font-sans)',
+              color: 'var(--fg-primary)',
+            }}
+          >
+            Client got in touch directly?
+          </h2>
+          <p
+            style={{
+              fontSize: 12.5,
+              color: 'var(--fg-secondary)',
+              margin: '4px 0 12px',
+              lineHeight: 1.5,
+            }}
+          >
+            The subsidiary does not answer the client on price, scope, or contract. Route
+            the request to Account Management — they'll handle it.
+          </p>
+          {dawinUser && (
+            <RouteToAMButton
+              receivingSubsidiaryOrgId={iwo.subsidiaryOrgId}
+              masterJobId={iwo.masterJobId}
+              clientId={iwo.masterJobId}
+              routedToUserId={packet?.commsOwnerUserId ?? ''}
+              defaultNote={`Re: ${iwo.code} — `}
+            />
+          )}
+        </div>
       </section>
     </div>
   );

@@ -141,14 +141,16 @@
 .zui-banner-msg   { font-size: 12px; color: var(--fg-secondary); margin-top: 2px; }
 .zui-banner-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-.zui-banner.tone-amber { background: var(--rag-amber-soft); border-color: rgba(225, 132, 37, 0.3); }
-.zui-banner.tone-red   { background: var(--rag-red-soft);   border-color: rgba(212, 65, 58, 0.3); }
-.zui-banner.tone-green { background: var(--rag-green-soft); border-color: rgba(78, 138, 74, 0.3); }
-.zui-banner.tone-blue  { background: var(--rag-blue-soft);  border-color: rgba(65, 114, 168, 0.3); }
-.zui-banner.tone-amber .zui-banner-icon { background: var(--rag-amber); }
-.zui-banner.tone-red   .zui-banner-icon { background: var(--rag-red); }
-.zui-banner.tone-green .zui-banner-icon { background: var(--rag-green); }
-.zui-banner.tone-blue  .zui-banner-icon { background: var(--rag-blue); }
+.zui-banner.tone-amber  { background: var(--rag-amber-soft); border-color: rgba(225, 132, 37, 0.3); }
+.zui-banner.tone-red    { background: var(--rag-red-soft);   border-color: rgba(212, 65, 58, 0.3); }
+.zui-banner.tone-green  { background: var(--rag-green-soft); border-color: rgba(78, 138, 74, 0.3); }
+.zui-banner.tone-blue   { background: var(--rag-blue-soft);  border-color: rgba(65, 114, 168, 0.3); }
+.zui-banner.tone-accent { background: var(--accent-soft);    border-color: color-mix(in oklab, var(--accent) 24%, transparent); }
+.zui-banner.tone-amber  .zui-banner-icon { background: var(--rag-amber); }
+.zui-banner.tone-red    .zui-banner-icon { background: var(--rag-red); }
+.zui-banner.tone-green  .zui-banner-icon { background: var(--rag-green); }
+.zui-banner.tone-blue   .zui-banner-icon { background: var(--rag-blue); }
+.zui-banner.tone-accent .zui-banner-icon { background: var(--accent); }
 
 /* ---- RAG badge ---- */
 .zui-rag {
