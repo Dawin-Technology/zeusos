@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-export type BannerTone = 'amber' | 'red' | 'green' | 'blue';
+export type BannerTone = 'amber' | 'red' | 'green' | 'blue' | 'accent';
 
 export interface BannerProps {
   tone?: BannerTone;
@@ -30,6 +30,7 @@ const DEFAULT_ICON: Record<BannerTone, LucideIcon> = {
   red: AlertCircle,
   green: CheckCircle2,
   blue: Info,
+  accent: Info,
 };
 
 export function Banner({

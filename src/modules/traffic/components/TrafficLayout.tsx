@@ -1,10 +1,14 @@
 /**
  * Phase 6.UI.B — Traffic module layout. Tabbed nav per the manifest:
  *   Routing Queue · Active IWOs · Brand Capacity · Override Log
+ *
+ * Shell re-skin PR 3: the raw Tailwind tab rail is replaced with the
+ * soft-skin `.zeus-tabs` primitive so Traffic reads as a sibling of
+ * the PR 2 Sales/Accounts cluster. `data-testid` on every tab is
+ * preserved verbatim for Playwright.
  */
 
 import { NavLink, Outlet } from 'react-router-dom';
-import { cn } from '@/shared/lib/utils';
 import { PageHero } from '@/shared/components/refresh';
 
 const TABS: { to: string; label: string; testId: string }[] = [
@@ -23,28 +27,18 @@ export function TrafficLayout() {
         body="Brand-routing decisions for open master jobs. The engine proposes a serving brand; Traffic confirms or overrides before issuance. Conflict-walled candidates are excluded automatically."
       />
 
-      <nav className="mb-5" style={{ borderBottom: '1px solid var(--border-subtle)' }} aria-label="Traffic tabs">
-        <ul className="flex gap-1 -mb-px">
-          {TABS.map((t) => (
-            <li key={t.to}>
-              <NavLink
-                to={t.to}
-                end={t.to === '/traffic'}
-                data-testid={t.testId}
-                className={({ isActive }) =>
-                  cn(
-                    'inline-block px-3.5 py-2.5 text-[13px] border-b-2 transition-colors',
-                    isActive
-                      ? 'border-[var(--zeus-red)] text-[var(--fg-primary)] font-semibold'
-                      : 'border-transparent text-[var(--fg-tertiary)] font-medium hover:text-[var(--fg-primary)]',
-                  )
-                }
-              >
-                {t.label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+      <nav className="zeus-tabs" aria-label="Traffic tabs">
+        {TABS.map((t) => (
+          <NavLink
+            key={t.to}
+            to={t.to}
+            end={t.to === '/traffic'}
+            data-testid={t.testId}
+            className={({ isActive }) => `zeus-tab${isActive ? ' active' : ''}`}
+          >
+            {t.label}
+          </NavLink>
+        ))}
       </nav>
 
       <Outlet />

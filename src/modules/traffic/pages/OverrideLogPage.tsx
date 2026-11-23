@@ -6,6 +6,10 @@
  * against issued IWOs — that join lands in 6.E with the unified
  * inbox. For now we show the raw proposal stream so Traffic can
  * audit decisions chronologically.
+ *
+ * Shell re-skin PR 3: the raw table becomes a `.zeus-panel` with
+ * a sticky soft header and `.zeus-row` list rows that mirror the
+ * Active IWOs surface, so Traffic reads as one cluster.
  */
 
 import { useEffect, useState } from 'react';
@@ -22,6 +26,8 @@ function formatOccurredAt(ts: string): string {
     return ts;
   }
 }
+
+const HEAD_GRID = 'minmax(140px, 180px) minmax(140px, 1fr) 110px 150px 110px 80px';
 
 export default function OverrideLogPage() {
   const [events, setEvents] = useState<RoutingBrandProposedEvent[]>([]);
@@ -40,7 +46,14 @@ export default function OverrideLogPage() {
       <div
         role="alert"
         data-testid="override-log-error"
-        className="p-4 rounded-md border border-[var(--rag-red)] bg-[var(--rag-red-soft)] text-[var(--rag-red-deep)]"
+        className="zeus-panel"
+        style={{
+          padding: '14px 18px',
+          borderColor: 'color-mix(in oklab, var(--rag-red) 30%, transparent)',
+          background: 'var(--rag-red-soft)',
+          color: 'var(--rag-red-deep, var(--rag-red))',
+          fontSize: 13,
+        }}
       >
         {err}
       </div>
@@ -48,67 +61,107 @@ export default function OverrideLogPage() {
   }
 
   return (
-    <section data-testid="override-log-page">
-      <p className="text-[12px] text-[var(--fg-tertiary)] mb-3">
-        Routing proposals emitted by the engine. Override detection (proposed vs
-        actual brand) joins against issued IWOs — surfaced fully in 6.E.
+    <section
+      data-testid="override-log-page"
+      style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+    >
+      <p
+        style={{
+          fontSize: 12.5,
+          color: 'var(--fg-secondary)',
+          margin: 0,
+          lineHeight: 1.5,
+        }}
+      >
+        Routing proposals emitted by the engine. Override detection (proposed vs actual
+        brand) joins against issued IWOs — surfaced fully in 6.E.
       </p>
+
       {events.length === 0 ? (
-        <p
+        <div
           data-testid="override-log-empty"
-          className="text-[13px] text-[var(--fg-tertiary)] italic p-4 rounded-md border border-dashed border-[var(--border-default)] text-center"
+          className="zeus-panel"
+          style={{
+            padding: '28px 24px',
+            textAlign: 'center',
+            fontSize: 13,
+            color: 'var(--fg-tertiary)',
+            borderStyle: 'dashed',
+          }}
         >
           No routing proposals recorded yet.
-        </p>
+        </div>
       ) : (
-        <table className="w-full text-[12.5px] border-collapse">
-          <thead>
-            <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--fg-tertiary)] border-b border-[var(--border-default)]">
-              <th className="py-2 pr-3 font-medium">When</th>
-              <th className="py-2 pr-3 font-medium">Master Job</th>
-              <th className="py-2 pr-3 font-medium">Capability</th>
-              <th className="py-2 pr-3 font-medium">Proposed</th>
-              <th className="py-2 pr-3 font-medium">Geography</th>
-              <th className="py-2 pr-3 font-medium">Rejected</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="zeus-panel">
+          <div
+            role="row"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: HEAD_GRID,
+              gap: 14,
+              padding: '10px 18px',
+              borderBottom: '1px solid var(--border-subtle)',
+              background: 'var(--bg-surface)',
+              font: '600 10.5px var(--font-mono)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--fg-tertiary)',
+            }}
+          >
+            <span>When</span>
+            <span>Master Job</span>
+            <span>Capability</span>
+            <span>Proposed</span>
+            <span>Geography</span>
+            <span style={{ textAlign: 'right' }}>Rejected</span>
+          </div>
+          <ul className="zeus-row-list">
             {events.map((ev) => {
               const rejectedCount = ev.payload.candidates.filter(
                 (c) => c.rejectionReason !== null,
               ).length;
               return (
-                <tr
+                <li
                   key={ev.id}
                   data-testid={`override-log-row-${ev.id}`}
-                  className="border-b border-[var(--border-default)] hover:bg-[var(--bg-sunken)]"
+                  className="zeus-row"
+                  style={{ gridTemplateColumns: HEAD_GRID, fontSize: 12.5 }}
                 >
-                  <td className="py-2 pr-3 text-[var(--fg-tertiary)] whitespace-nowrap">
+                  <span style={{ color: 'var(--fg-tertiary)', whiteSpace: 'nowrap' }}>
                     {formatOccurredAt(ev.occurredAt)}
-                  </td>
-                  <td className="py-2 pr-3">
-                    <Link
-                      to={`/master-jobs/${ev.aggregateId}`}
-                      className="text-[var(--accent)] hover:underline font-mono"
-                    >
-                      {ev.aggregateId}
-                    </Link>
-                  </td>
-                  <td className="py-2 pr-3">{ev.payload.requiredCapability}</td>
-                  <td className="py-2 pr-3 font-medium">
+                  </span>
+                  <Link
+                    to={`/master-jobs/${ev.aggregateId}`}
+                    className="zeus-row-link"
+                    style={{ fontSize: 12.5 }}
+                  >
+                    {ev.aggregateId}
+                  </Link>
+                  <span>{ev.payload.requiredCapability}</span>
+                  <span style={{ fontWeight: 600 }}>
                     {ev.payload.proposedBrandId ?? (
-                      <span className="text-[var(--rag-red)]">none eligible</span>
+                      <span style={{ color: 'var(--rag-red-deep, var(--rag-red))', fontWeight: 500 }}>
+                        none eligible
+                      </span>
                     )}
-                  </td>
-                  <td className="py-2 pr-3 text-[var(--fg-tertiary)]">
+                  </span>
+                  <span style={{ color: 'var(--fg-tertiary)' }}>
                     {ev.payload.geographyPreferenceApplied ?? '—'}
-                  </td>
-                  <td className="py-2 pr-3 text-[var(--fg-tertiary)]">{rejectedCount}</td>
-                </tr>
+                  </span>
+                  <span
+                    style={{
+                      textAlign: 'right',
+                      color: 'var(--fg-tertiary)',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {rejectedCount}
+                  </span>
+                </li>
               );
             })}
-          </tbody>
-        </table>
+          </ul>
+        </div>
       )}
     </section>
   );
