@@ -71,37 +71,43 @@ export function SettingsLandingPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-foreground">Finance Settings</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <div className="eyebrow" style={{ marginBottom: 4 }}>Finance · Settings</div>
+        <h2 className="h1">Finance Settings</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           Configuration, integrations & account management
         </p>
       </div>
 
-      {/* Vertical list of settings sections */}
-      <div className="space-y-2">
-        {SECTIONS.map((section) => {
-          const Icon = section.icon;
-          return (
-            <button
-              key={section.id}
-              onClick={() => navigate(section.path)}
-              className="w-full flex items-center gap-4 px-4 py-3.5 rounded-lg border border-[var(--border-subtle)] bg-card hover:border-[var(--border-default)] hover:shadow-sm text-left transition-all"
-            >
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--bg-sunken)] shrink-0">
-                <Icon className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-semibold text-foreground">
-                  {section.label}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {section.description}
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[var(--fg-tertiary)] shrink-0" />
-            </button>
-          );
-        })}
+      {/* Vertical list of settings sections — soft panel of rows */}
+      <div className="zeus-panel">
+        <ul className="zeus-row-list zeus-finance-settings-list">
+          {SECTIONS.map((section) => {
+            const Icon = section.icon;
+            return (
+              <li key={section.id} className="zeus-row zeus-finance-settings-row">
+                <button
+                  type="button"
+                  onClick={() => navigate(section.path)}
+                  className="zeus-finance-settings-btn"
+                  data-testid={`settings-section-${section.id}`}
+                >
+                  <div className="zeus-finance-settings-icon">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold" style={{ color: 'var(--fg-primary)' }}>
+                      {section.label}
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--fg-tertiary)' }}>
+                      {section.description}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--fg-tertiary)' }} />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );

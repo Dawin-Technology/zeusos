@@ -54,14 +54,14 @@ interface QuickLink {
 }
 
 const QUICK_LINKS: QuickLink[] = [
-  { label: 'KPI Explorer', icon: Search, path: '/finance/overview/kpi-explorer', color: '#7C3AED' },
-  { label: 'Growth', icon: TrendingUp, path: '/finance/overview/growth', color: '#059669' },
-  { label: 'Trend', icon: LineChart, path: '/finance/overview/trend', color: '#2563EB' },
-  { label: 'Goal Seek', icon: Crosshair, path: '/finance/overview/goal-seek', color: '#EA580C' },
-  { label: 'AI Reports', icon: FileText, path: '/finance/overview/reports', color: '#6366F1' },
-  { label: 'CFO Briefing', icon: Brain, path: '/finance/cash/briefing', color: '#8B5CF6' },
-  { label: 'Scenarios', icon: GitBranch, path: '/finance/cash/scenarios', color: '#BE185D' },
-  { label: 'Health Detail', icon: Heart, path: '/finance/overview/financial-health', color: '#16a34a' },
+  { label: 'KPI Explorer', icon: Search, path: '/finance/overview/kpi-explorer', color: 'var(--rag-blue)' },
+  { label: 'Growth', icon: TrendingUp, path: '/finance/overview/growth', color: 'var(--rag-green)' },
+  { label: 'Trend', icon: LineChart, path: '/finance/overview/trend', color: 'var(--rag-blue)' },
+  { label: 'Goal Seek', icon: Crosshair, path: '/finance/overview/goal-seek', color: 'var(--rag-amber)' },
+  { label: 'AI Reports', icon: FileText, path: '/finance/overview/reports', color: 'var(--accent)' },
+  { label: 'CFO Briefing', icon: Brain, path: '/finance/cash/briefing', color: 'var(--rag-blue)' },
+  { label: 'Scenarios', icon: GitBranch, path: '/finance/cash/scenarios', color: 'var(--rag-red)' },
+  { label: 'Health Detail', icon: Heart, path: '/finance/overview/financial-health', color: 'var(--rag-green)' },
 ];
 
 // ── Loading Skeleton ───────────────────────────────────────────────────────
@@ -339,43 +339,43 @@ export function FinanceOverviewPage() {
       </div>
 
       {/* Row 4: Cross-Module Links */}
-      <Card className="p-4">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Connected Modules</h3>
+      <div className="zeus-panel zeus-panel-pad">
+        <h3 className="eyebrow" style={{ marginBottom: 12 }}>Connected Modules</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             onClick={() => navigate('/manufacturing/procurement')}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="zeus-finance-link"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--rag-blue)]" />
+            <div className="zeus-finance-link-dot" style={{ background: 'var(--rag-blue)' }} />
             Purchase Orders
           </button>
           <button
             onClick={() => navigate('/assets')}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="zeus-finance-link"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--rag-blue)]" />
+            <div className="zeus-finance-link-dot" style={{ background: 'var(--rag-blue)' }} />
             Asset Registry
           </button>
           <button
             onClick={() => navigate('/hr/payroll')}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="zeus-finance-link"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--rag-amber)]" />
+            <div className="zeus-finance-link-dot" style={{ background: 'var(--rag-amber)' }} />
             Payroll / PAYE
           </button>
           <button
             onClick={() => navigate('/strategy')}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="zeus-finance-link"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--rag-green)]" />
+            <div className="zeus-finance-link-dot" style={{ background: 'var(--rag-green)' }} />
             Strategy KPIs
           </button>
         </div>
-      </Card>
+      </div>
 
       {/* Row 5: Quick Access Grid */}
       <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-3">Quick Access</h3>
+        <h3 className="eyebrow" style={{ marginBottom: 12 }}>Quick Access</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {QUICK_LINKS.map((link) => {
             const Icon = link.icon;
@@ -383,15 +383,15 @@ export function FinanceOverviewPage() {
               <button
                 key={link.path}
                 onClick={() => navigate(link.path)}
-                className="flex items-center gap-2.5 px-3 py-2.5 bg-card border border-[var(--border-subtle)] rounded-lg hover:border-[var(--border-default)] hover:shadow-sm transition-all text-left"
+                className="zeus-finance-quick"
               >
                 <div
-                  className="flex items-center justify-center w-7 h-7 rounded-md shrink-0"
-                  style={{ backgroundColor: `${link.color}12` }}
+                  className="zeus-finance-quick-icon"
+                  style={{ ['--quick-color' as any]: link.color }}
                 >
                   <Icon className="w-3.5 h-3.5" style={{ color: link.color }} />
                 </div>
-                <span className="text-sm text-muted-foreground truncate">{link.label}</span>
+                <span className="zeus-finance-quick-label">{link.label}</span>
               </button>
             );
           })}

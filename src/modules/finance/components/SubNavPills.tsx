@@ -19,7 +19,7 @@ export function SubNavPills({ pills }: SubNavPillsProps) {
   const location = useLocation();
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+    <div className="zeus-subpills">
       {pills.map((pill) => {
         const Icon = pill.icon;
         const isActive = location.pathname === pill.path;
@@ -27,11 +27,8 @@ export function SubNavPills({ pills }: SubNavPillsProps) {
           <button
             key={pill.id}
             onClick={() => navigate(pill.path)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors shrink-0 ${
-              isActive
-                ? 'bg-[var(--rag-green-soft)] text-[var(--rag-green)] border border-[var(--rag-green)]'
-                : 'bg-[var(--bg-sunken)] text-muted-foreground border border-[var(--border-subtle)] hover:bg-[var(--bg-sunken)] hover:text-foreground'
-            }`}
+            className={`zeus-subpill${isActive ? ' active' : ''}`}
+            data-testid={`subpill-${pill.id}`}
           >
             <Icon className="w-3.5 h-3.5" />
             {pill.label}
