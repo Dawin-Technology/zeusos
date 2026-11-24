@@ -7,7 +7,6 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/core/components/ui/card';
 import { Button } from '@/core/components/ui/button';
 import { Skeleton } from '@/core/components/ui/skeleton';
 import { KPIGrid, KPICard } from '@/shared/components/data-display';
@@ -102,8 +101,9 @@ export function CashForecastLandingPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Cash & Forecast</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <div className="eyebrow" style={{ marginBottom: 4 }}>Finance · Cash & Forecast</div>
+          <h2 className="h1">Cash & Forecast</h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--fg-tertiary)' }}>
             Cash optimization, projections, and three-statement forecasting
           </p>
         </div>
@@ -121,7 +121,7 @@ export function CashForecastLandingPage() {
             size="sm"
             onClick={handleRunOptimizer}
             disabled={isRunning}
-            className="bg-[var(--rag-amber)] hover:bg-[var(--rag-amber)] text-white"
+            className="zeus-finance-cta"
           >
             {isRunning ? (
               <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
@@ -134,7 +134,7 @@ export function CashForecastLandingPage() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-[var(--rag-red-soft)] text-[var(--rag-red)] rounded-lg text-sm">
+        <div className="zeus-finance-alert zeus-finance-alert-red">
           <AlertTriangle className="w-4 h-4" />
           {error}
         </div>
@@ -142,20 +142,21 @@ export function CashForecastLandingPage() {
 
       {/* Crisis Alert */}
       {criticalCount > 0 && (
-        <div className="flex items-center gap-3 p-4 bg-[var(--rag-red-soft)] border border-[var(--rag-red)] rounded-lg">
-          <AlertTriangle className="w-5 h-5 text-[var(--rag-red)] shrink-0" />
+        <div className="zeus-finance-alert zeus-finance-alert-red zeus-finance-alert-strong">
+          <AlertTriangle className="w-5 h-5 shrink-0" style={{ color: 'var(--rag-red)' }} />
           <div>
-            <p className="text-sm font-semibold text-[var(--rag-red)]">
+            <p className="text-sm font-semibold" style={{ color: 'var(--rag-red)' }}>
               {criticalCount} critical expenditure{criticalCount > 1 ? 's' : ''} require immediate attention
             </p>
-            <p className="text-xs text-[var(--rag-red)] mt-0.5">
+            <p className="text-xs mt-0.5" style={{ color: 'var(--rag-red)' }}>
               Total: {formatUGX(queueByTier['CRITICAL']?.reduce((s: number, i: any) => s + i.amountUGX, 0) || 0)}
             </p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="ml-auto text-[var(--rag-red)] border-[var(--rag-red)] hover:bg-[var(--rag-red-soft)]"
+            className="ml-auto"
+            style={{ color: 'var(--rag-red)', borderColor: 'var(--rag-red)' }}
             onClick={() => navigate('/finance/cash/expenditures?tier=CRITICAL')}
           >
             View
@@ -210,9 +211,9 @@ export function CashForecastLandingPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Projection Chart */}
-        <Card className="lg:col-span-2 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">90-Day Cash Projection</h3>
+        <div className="zeus-panel lg:col-span-2">
+          <div className="zeus-panel-head">
+            <h3>90-Day Cash Projection</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -223,17 +224,19 @@ export function CashForecastLandingPage() {
               Details
             </Button>
           </div>
-          <ProjectionChart
-            projection={projection}
-            bufferAmount={bufferAmount}
-            height={300}
-          />
-        </Card>
+          <div className="zeus-panel-pad">
+            <ProjectionChart
+              projection={projection}
+              bufferAmount={bufferAmount}
+              height={300}
+            />
+          </div>
+        </div>
 
         {/* Today's Spend Plan */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Today&apos;s Spend Plan</h3>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--fg-primary)' }}>Today&apos;s Spend Plan</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -251,9 +254,9 @@ export function CashForecastLandingPage() {
               onDefer={(id) => deferItem(id, 'Deferred from dashboard')}
             />
           ) : (
-            <Card className="p-6 text-center">
-              <Clock className="w-8 h-8 text-[var(--fg-tertiary)] mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No spend plan generated yet</p>
+            <div className="zeus-panel zeus-panel-pad" style={{ textAlign: 'center', padding: '24px' }}>
+              <Clock className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--fg-tertiary)' }} />
+              <p className="text-sm" style={{ color: 'var(--fg-secondary)' }}>No spend plan generated yet</p>
               <Button
                 variant="outline"
                 size="sm"
@@ -263,16 +266,16 @@ export function CashForecastLandingPage() {
               >
                 Generate Plan
               </Button>
-            </Card>
+            </div>
           )}
         </div>
       </div>
 
       {/* Top Critical Items */}
       {expenditureQueue.length > 0 && (
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-foreground">Top Expenditures by Score</h3>
+        <div className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h3>Top Expenditures by Score</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -283,63 +286,69 @@ export function CashForecastLandingPage() {
               View All
             </Button>
           </div>
-          <div className="space-y-2">
-            {expenditureQueue.slice(0, 5).map((item: any) => (
-              <div key={item.id} className="flex items-center gap-3 py-2 border-b border-[var(--border-subtle)] last:border-0">
-                <span
-                  className="text-sm font-bold w-8 text-center"
-                  style={{ color: PRIORITY_TIER_COLORS[item.priorityTier as keyof typeof PRIORITY_TIER_COLORS] }}
-                >
-                  {item.compositeScore.toFixed(0)}
-                </span>
-                <TierBadge tier={item.priorityTier} />
-                <span className="text-sm text-muted-foreground truncate flex-1">{item.description}</span>
-                {item.vendor && (
-                  <span className="text-xs text-[var(--fg-tertiary)] hidden sm:block">{item.vendor}</span>
-                )}
-                <span className="text-sm font-medium text-foreground shrink-0">{formatUGX(item.amountUGX)}</span>
-              </div>
-            ))}
+          <div className="zeus-panel-pad">
+            <div className="space-y-2">
+              {expenditureQueue.slice(0, 5).map((item: any) => (
+                <div key={item.id} className="flex items-center gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <span
+                    className="text-sm font-bold w-8 text-center"
+                    style={{ color: PRIORITY_TIER_COLORS[item.priorityTier as keyof typeof PRIORITY_TIER_COLORS] }}
+                  >
+                    {item.compositeScore.toFixed(0)}
+                  </span>
+                  <TierBadge tier={item.priorityTier} />
+                  <span className="text-sm truncate flex-1" style={{ color: 'var(--fg-secondary)' }}>{item.description}</span>
+                  {item.vendor && (
+                    <span className="text-xs hidden sm:block" style={{ color: 'var(--fg-tertiary)' }}>{item.vendor}</span>
+                  )}
+                  <span className="text-sm font-medium shrink-0" style={{ color: 'var(--fg-primary)' }}>{formatUGX(item.amountUGX)}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Data Sources — Cross-module links */}
-      <Card className="p-4">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+      <div className="zeus-panel zeus-panel-pad">
+        <h3 className="eyebrow" style={{ marginBottom: 12 }}>
           Cash Data Sources
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             onClick={() => navigate('/finance/operations/bills')}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="zeus-finance-link"
+            data-testid="cash-source-bills"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--rag-red)]" />
+            <div className="zeus-finance-link-dot" style={{ background: 'var(--rag-red)' }} />
             QBO Bills & Payables
           </button>
           <button
             onClick={() => navigate('/manufacturing/procurement')}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="zeus-finance-link"
+            data-testid="cash-source-pos"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--rag-blue)]" />
+            <div className="zeus-finance-link-dot" style={{ background: 'var(--rag-blue)' }} />
             Purchase Orders
           </button>
           <button
             onClick={() => navigate('/hr/payroll')}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="zeus-finance-link"
+            data-testid="cash-source-payroll"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--rag-amber)]" />
+            <div className="zeus-finance-link-dot" style={{ background: 'var(--rag-amber)' }} />
             Salary & PAYE
           </button>
           <button
             onClick={() => navigate('/finance/operations/invoices')}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="zeus-finance-link"
+            data-testid="cash-source-invoices"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--rag-green)]" />
+            <div className="zeus-finance-link-dot" style={{ background: 'var(--rag-green)' }} />
             Invoices & Receipts
           </button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

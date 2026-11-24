@@ -288,16 +288,17 @@ export function ReportsLandingPage() {
     return (
       <div className="space-y-5">
         <div>
-          <h2 className="text-xl font-bold text-foreground">AI Finance Reports</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Generate intelligent reports for different stakeholders</p>
+          <div className="eyebrow" style={{ marginBottom: 4 }}>Finance · AI Reports</div>
+          <h2 className="h1">AI Finance Reports</h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--fg-tertiary)' }}>Generate intelligent reports for different stakeholders</p>
         </div>
-        <Card className="p-8 text-center">
-          <Sparkles className="w-10 h-10 text-[var(--fg-tertiary)] mx-auto mb-3" />
-          <p className="font-medium text-muted-foreground">AI reports require a Gemini API key</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Configure <code className="bg-[var(--bg-sunken)] px-1.5 py-0.5 rounded text-xs font-mono">VITE_GEMINI_API_KEY</code> in your environment.
+        <div className="zeus-panel zeus-panel-pad" style={{ textAlign: 'center', padding: '32px' }}>
+          <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--fg-tertiary)' }} />
+          <p className="font-medium" style={{ color: 'var(--fg-secondary)' }}>AI reports require a Gemini API key</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--fg-tertiary)' }}>
+            Configure <code className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--bg-sunken)' }}>VITE_GEMINI_API_KEY</code> in your environment.
           </p>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -306,8 +307,9 @@ export function ReportsLandingPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-foreground">AI Finance Reports</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Generate intelligent reports for different stakeholders</p>
+        <div className="eyebrow" style={{ marginBottom: 4 }}>Finance · AI Reports</div>
+        <h2 className="h1">AI Finance Reports</h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--fg-tertiary)' }}>Generate intelligent reports for different stakeholders</p>
       </div>
 
       {dataError && (
@@ -480,13 +482,13 @@ export function ReportsLandingPage() {
 
       {/* Empty state — no template selected and no report */}
       {!selectedTemplate && !generatedReport && !dataLoading && (
-        <Card className="p-8 text-center">
-          <Sparkles className="w-10 h-10 text-[var(--fg-tertiary)] mx-auto mb-3" />
-          <p className="font-medium text-muted-foreground">Select a report template above to get started</p>
-          <p className="text-sm text-[var(--fg-tertiary)] mt-1">
+        <div className="zeus-panel zeus-panel-pad" style={{ textAlign: 'center', padding: '32px' }}>
+          <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--fg-tertiary)' }} />
+          <p className="font-medium" style={{ color: 'var(--fg-secondary)' }}>Select a report template above to get started</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--fg-tertiary)' }}>
             Choose the audience for your report and we will generate an AI-powered financial analysis.
           </p>
-        </Card>
+        </div>
       )}
     </div>
   );

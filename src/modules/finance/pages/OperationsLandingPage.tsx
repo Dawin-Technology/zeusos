@@ -6,7 +6,6 @@
 // ============================================================================
 
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/core/components/ui/card';
 import {
   ArrowRight,
 } from 'lucide-react';
@@ -52,8 +51,9 @@ export function OperationsLandingPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-foreground">Finance Operations</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <div className="eyebrow" style={{ marginBottom: 4 }}>Finance · Operations</div>
+        <h2 className="h1">Finance Operations</h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--fg-tertiary)' }}>
           Day-to-day financial activities & workflows
         </p>
       </div>
@@ -85,80 +85,91 @@ export function OperationsLandingPage() {
       {/* Row 2: Budget Status + Top Accounts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Budget Status */}
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Active Budgets</h3>
+        <div className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h3>Active Budgets</h3>
             <button
               onClick={() => navigate('/finance/operations/budgets')}
-              className="inline-flex items-center gap-1 text-xs font-medium text-[var(--rag-green)] hover:text-[var(--rag-green)]"
+              className="inline-flex items-center gap-1 text-xs font-medium"
+              style={{ color: 'var(--rag-green)' }}
             >
               View All <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          {budgets.length > 0 ? (
-            <div className="space-y-3">
-              {budgets.map((b) => (
-                <div key={b.id}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-muted-foreground truncate max-w-[50%]">{b.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-[var(--fg-tertiary)]">{b.category}</span>
-                      <span className={`text-xs font-medium ${b.utilization >= 100 ? 'text-[var(--rag-red)]' : b.utilization >= 85 ? 'text-[var(--rag-amber)]' : 'text-muted-foreground'}`}>
-                        {b.utilization}%
-                      </span>
+          <div className="zeus-panel-pad">
+            {budgets.length > 0 ? (
+              <div className="space-y-3">
+                {budgets.map((b) => (
+                  <div key={b.id}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="truncate max-w-[50%]" style={{ color: 'var(--fg-secondary)' }}>{b.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs" style={{ color: 'var(--fg-tertiary)' }}>{b.category}</span>
+                        <span className={`text-xs font-medium ${b.utilization >= 100 ? 'text-[var(--rag-red)]' : b.utilization >= 85 ? 'text-[var(--rag-amber)]' : ''}`}
+                          style={b.utilization < 85 ? { color: 'var(--fg-tertiary)' } : undefined}
+                        >
+                          {b.utilization}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="zeus-burn-track">
+                      <div
+                        className={`zeus-burn-fill ${b.utilization >= 100 ? 'over' : b.utilization >= 85 ? 'warn' : ''}`}
+                        style={{ width: `${Math.min(b.utilization, 100)}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="h-1.5 bg-[var(--bg-sunken)] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${b.utilization >= 100 ? 'bg-[var(--rag-red)]' : b.utilization >= 85 ? 'bg-[var(--rag-amber)]' : 'bg-[var(--rag-green)]'}`}
-                      style={{ width: `${Math.min(b.utilization, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-[var(--fg-tertiary)] text-center py-6">No active budgets</p>
-          )}
-        </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="zeus-panel-empty">No active budgets</p>
+            )}
+          </div>
+        </div>
 
         {/* Top Accounts */}
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Top Accounts by Balance</h3>
+        <div className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h3>Top Accounts by Balance</h3>
             <button
               onClick={() => navigate('/finance/settings/accounts')}
-              className="inline-flex items-center gap-1 text-xs font-medium text-[var(--rag-green)] hover:text-[var(--rag-green)]"
+              className="inline-flex items-center gap-1 text-xs font-medium"
+              style={{ color: 'var(--rag-green)' }}
             >
               Chart of Accounts <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          {accounts.length > 0 ? (
-            <div className="space-y-2">
-              {accounts.slice(0, 5).map((a) => (
-                <div key={a.id} className="flex items-center justify-between py-1.5 border-b border-[var(--border-subtle)] last:border-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                      a.type === 'asset' ? 'bg-[var(--rag-blue-soft)] text-[var(--rag-blue)]' :
-                      a.type === 'liability' ? 'bg-[var(--rag-red-soft)] text-[var(--rag-red)]' :
-                      a.type === 'equity' ? 'bg-[var(--rag-blue-soft)] text-[var(--rag-blue)]' :
-                      a.type === 'revenue' ? 'bg-[var(--rag-green-soft)] text-[var(--rag-green)]' :
-                      'bg-[var(--rag-amber-soft)] text-[var(--rag-amber)]'
-                    }`}>
-                      {a.type}
-                    </span>
-                    <span className="text-sm text-muted-foreground truncate">{a.name}</span>
-                  </div>
-                  <span className="text-sm font-medium text-foreground shrink-0 ml-2">
-                    {formatCompact(a.balance)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-[var(--fg-tertiary)] text-center py-6">No account data</p>
-          )}
-        </Card>
+          <div className="zeus-panel-pad">
+            {accounts.length > 0 ? (
+              <div className="space-y-2">
+                {accounts.slice(0, 5).map((a) => {
+                  const typeTone =
+                    a.type === 'asset' || a.type === 'equity' ? 'zeus-state-pill' :
+                    a.type === 'liability' ? 'zeus-state-pill red' :
+                    a.type === 'revenue' ? 'zeus-state-pill green' :
+                    'zeus-state-pill amber';
+                  const typeStyle =
+                    a.type === 'asset' || a.type === 'equity'
+                      ? { background: 'var(--rag-blue-soft)', color: 'var(--rag-blue)' }
+                      : undefined;
+                  return (
+                    <div key={a.id} className="flex items-center justify-between py-1.5 border-b last:border-0" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={typeTone} style={typeStyle}>{a.type}</span>
+                        <span className="text-sm truncate" style={{ color: 'var(--fg-secondary)' }}>{a.name}</span>
+                      </div>
+                      <span className="text-sm font-medium shrink-0 ml-2" style={{ color: 'var(--fg-primary)' }}>
+                        {formatCompact(a.balance)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="zeus-panel-empty">No account data</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

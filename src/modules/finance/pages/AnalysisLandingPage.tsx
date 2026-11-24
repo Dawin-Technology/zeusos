@@ -91,24 +91,24 @@ function AnalysisNavCard({ card }: { card: AnalysisCard }) {
   const Icon = card.icon;
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => navigate(card.path)}
-      className="bg-card border border-[var(--border-subtle)] rounded-xl p-5 hover:border-[var(--rag-green)] hover:shadow-md transition-all cursor-pointer group"
+      className="zeus-finance-nav-card"
+      data-testid={`analysis-card-${card.label.replace(/\s+/g, '-').toLowerCase()}`}
     >
       <div className="flex items-start gap-4">
-        <div className="shrink-0 w-10 h-10 rounded-full bg-[var(--rag-green-soft)] flex items-center justify-center group-hover:bg-[var(--rag-green-soft)] transition-colors">
-          <Icon className="h-5 w-5 text-[var(--rag-green)]" />
+        <div className="zeus-finance-nav-icon">
+          <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-foreground group-hover:text-[var(--rag-green)] transition-colors">
-            {card.label}
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+          <h3 className="zeus-finance-nav-title">{card.label}</h3>
+          <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--fg-tertiary)' }}>
             {card.description}
           </p>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -119,14 +119,15 @@ export function AnalysisLandingPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-foreground">Financial Analysis</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <div className="eyebrow" style={{ marginBottom: 4 }}>Finance · Analysis</div>
+        <h2 className="h1">Financial Analysis</h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--fg-tertiary)' }}>
           Analyse financial performance, ratios, and trends
         </p>
       </div>
 
       {/* Card Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="zeus-finance-nav-grid">
         {CARDS.map((card) => (
           <AnalysisNavCard key={card.path} card={card} />
         ))}
