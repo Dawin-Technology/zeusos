@@ -1,0 +1,173 @@
+/* ============================================================
+   GalleryLayout — soft-skin thumbnail grid.
+   Scaled responsively down to a single-column on narrow mobile.
+   All selectors scoped under `[data-skin="soft"]` so the primitive
+   paints only inside the DawinOS soft chrome.
+   ============================================================ */
+
+[data-skin="soft"] .zui-gal {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(var(--zui-gal-cols, 4), minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  [data-skin="soft"] .zui-gal {
+    grid-template-columns: repeat(min(var(--zui-gal-cols, 4), 3), minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  [data-skin="soft"] .zui-gal {
+    grid-template-columns: repeat(min(var(--zui-gal-cols, 4), 2), minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  [data-skin="soft"] .zui-gal {
+    grid-template-columns: 1fr;
+  }
+}
+[data-skin="soft"][data-density="compact"] .zui-gal { gap: 12px; }
+
+/* Tile — a soft-rounded card framing the thumbnail + meta */
+[data-skin="soft"] .zui-gal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  color: inherit;
+  text-decoration: none;
+  cursor: default;
+  min-width: 0;
+  transition:
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+[data-skin="soft"] a.zui-gal-item,
+[data-skin="soft"] button.zui-gal-item {
+  cursor: pointer;
+}
+[data-skin="soft"] a.zui-gal-item:hover,
+[data-skin="soft"] button.zui-gal-item:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-default);
+  transform: translateY(-1px);
+}
+[data-skin="soft"] a.zui-gal-item:focus-visible,
+[data-skin="soft"] button.zui-gal-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Thumbnail — square-ish with aspect-ratio for consistency */
+[data-skin="soft"] .zui-gal-thumb {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--bg-sunken);
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 0;
+}
+[data-skin="soft"] .zui-gal-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+[data-skin="soft"] .zui-gal-thumb-ph {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--accent-soft), var(--bg-sunken));
+  color: var(--fg-tertiary);
+  font: 600 18px var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+/* Badge — chip pinned top-right of the thumbnail */
+[data-skin="soft"] .zui-gal-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--bg-surface);
+  color: var(--fg-secondary);
+  box-shadow: var(--shadow-sm);
+}
+[data-skin="soft"] .zui-gal-badge.tone-accent { background: var(--accent-soft); color: var(--accent); }
+[data-skin="soft"] .zui-gal-badge.tone-amber  { background: var(--rag-amber-soft); color: var(--rag-amber-deep, var(--rag-amber)); }
+[data-skin="soft"] .zui-gal-badge.tone-red    { background: var(--rag-red-soft);   color: var(--rag-red-deep, var(--rag-red)); }
+[data-skin="soft"] .zui-gal-badge.tone-green  { background: var(--rag-green-soft); color: var(--rag-green-deep, var(--rag-green)); }
+
+/* Overlay — bottom-attached band shown on hover */
+[data-skin="soft"] .zui-gal-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  color: #fff;
+  font: 500 11.5px var(--font-sans);
+  letter-spacing: -0.005em;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+[data-skin="soft"] .zui-gal-item:hover .zui-gal-overlay,
+[data-skin="soft"] .zui-gal-item:focus-within .zui-gal-overlay {
+  opacity: 1;
+}
+
+/* Meta — title + subtitle below the thumbnail */
+[data-skin="soft"] .zui-gal-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 2px 4px 4px;
+}
+[data-skin="soft"] .zui-gal-title {
+  font: 600 13px var(--font-sans);
+  letter-spacing: -0.005em;
+  color: var(--fg-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-skin="soft"] .zui-gal-sub {
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty state */
+[data-skin="soft"] .zui-gal-empty {
+  grid-column: 1 / -1;
+  padding: 36px 24px;
+  border: 1px dashed var(--border-default);
+  border-radius: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--fg-tertiary);
+  background: var(--bg-surface);
+}
+
+/* Dark-theme tweaks */
+[data-skin="soft"][data-theme="dark"] .zui-gal-item,
+[data-skin="soft"][data-theme="dark"] .zui-gal-empty {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}

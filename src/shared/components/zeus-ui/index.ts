@@ -37,6 +37,28 @@ export {
   type KanbanLayoutProps,
 } from './kanban/KanbanLayout';
 export {
+  CalendarLayout,
+  CalendarEventPill,
+  type CalendarEvent,
+  type CalendarLayoutProps,
+  type CalendarTone,
+  type CalendarView,
+} from './calendar/CalendarLayout';
+export {
+  OrgChartLayout,
+  OrgNodeCard,
+  type OrgNode,
+  type OrgChartLayoutProps,
+  type OrgChartOrientation,
+} from './org-chart/OrgChartLayout';
+export {
+  GalleryLayout,
+  GalleryTile,
+  type GalleryItem,
+  type GalleryLayoutProps,
+  type GalleryTone,
+} from './gallery/GalleryLayout';
+export {
   BrandChip,
   MiniBar,
   MoneyCell,

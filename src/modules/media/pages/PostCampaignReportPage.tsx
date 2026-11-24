@@ -33,6 +33,7 @@ export default function PostCampaignReportPage() {
 
   const totalPlanned = buys.reduce((s, b) => s + b.plannedMinor, 0);
   const totalActual  = buys.reduce((s, b) => s + b.actualMinor,  0);
+  const overallVariancePct = computeVariancePct(totalPlanned, totalActual);
 
   function handleExportPDF() {
     // Stub: in Phase 5 this will call a Cloud Function to generate
@@ -44,85 +45,119 @@ export default function PostCampaignReportPage() {
     }, 800);
   }
 
-  if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>;
-  if (!plan)   return <p className="p-6 text-sm text-muted-foreground">Plan not found.</p>;
+  if (loading) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading…</p>;
+  if (!plan)   return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Plan not found.</p>;
 
   return (
-    <div className="space-y-6 p-6 max-w-3xl">
-      <nav className="text-sm text-muted-foreground">
-        <Link to="/media" className="hover:underline">Media Plans</Link> ›{' '}
-        <Link to={`/media/${planId}`} className="hover:underline">{plan.title}</Link> › Report
-      </nav>
-
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Post-Campaign Report</h1>
-        <button
-          onClick={handleExportPDF}
-          disabled={exporting}
-          className="rounded border px-3 py-1.5 text-sm disabled:opacity-60"
-        >
-          {exporting ? 'Generating PDF…' : 'Export PDF'}
-        </button>
+    <div style={{ padding: 'var(--pad-page)', maxWidth: 960 }} className="space-y-5 mx-auto">
+      <div className="zeus-page-head">
+        <Link to={`/media/${planId}`} className="zeus-back-link">← {plan.title}</Link>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1>Post-Campaign Report</h1>
+          </div>
+          <div className="zeus-page-head-actions">
+            <button
+              onClick={handleExportPDF}
+              disabled={exporting}
+              className="zeus-outline-btn"
+            >
+              {exporting ? 'Generating PDF…' : 'Export PDF'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Narrative */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Executive Narrative</h2>
-        <textarea
-          value={narrative}
-          onChange={(e) => setNarrative(e.target.value)}
-          rows={6}
-          placeholder="Summarise campaign performance, key learnings, and recommendations…"
-          className="w-full rounded border px-2 py-1.5 text-sm"
-        />
+      <section className="zeus-panel">
+        <div className="zeus-panel-head">
+          <h3>Executive narrative</h3>
+          <span className="zeus-panel-head-meta">Shown on the exported PDF cover</span>
+        </div>
+        <div className="zeus-panel-pad">
+          <textarea
+            value={narrative}
+            onChange={(e) => setNarrative(e.target.value)}
+            rows={6}
+            placeholder="Summarise campaign performance, key learnings, and recommendations…"
+            className="zeus-textarea"
+          />
+        </div>
       </section>
 
       {/* Summary row */}
-      <section className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Total Planned', value: `${plan.currency} ${(totalPlanned / 100).toLocaleString()}` },
-          { label: 'Total Actual',  value: `${plan.currency} ${(totalActual  / 100).toLocaleString()}` },
-          {
-            label: 'Overall Variance',
-            value: `${computeVariancePct(totalPlanned, totalActual).toFixed(1)}%`,
-          },
-        ].map(({ label, value }) => (
-          <div key={label} className="rounded border p-3">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="mt-1 font-semibold">{value}</p>
+      <section className="zeus-tile-grid" style={{ ['--tile-cols' as string]: 3 }}>
+        <div className="zeus-tile">
+          <div className="zeus-tile-label">Total Planned</div>
+          <div className="zeus-tile-value">
+            {(totalPlanned / 100).toLocaleString()}
+            <span className="zeus-tile-unit">{plan.currency}</span>
           </div>
-        ))}
+        </div>
+        <div className="zeus-tile">
+          <div className="zeus-tile-label">Total Actual</div>
+          <div className="zeus-tile-value">
+            {(totalActual / 100).toLocaleString()}
+            <span className="zeus-tile-unit">{plan.currency}</span>
+          </div>
+        </div>
+        <div className={overallVariancePct > 10 ? 'zeus-tile warn' : 'zeus-tile'}>
+          <div className="zeus-tile-label">Overall Variance</div>
+          <div className="zeus-tile-value">
+            {overallVariancePct > 0 ? '+' : ''}{overallVariancePct.toFixed(1)}
+            <span className="zeus-tile-unit">%</span>
+          </div>
+          <div className="zeus-tile-sub">
+            {overallVariancePct > 10 ? 'Over plan' : overallVariancePct < -10 ? 'Under plan' : 'On plan'}
+          </div>
+        </div>
       </section>
 
       {/* Per-buy metrics table */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Channel Performance</h2>
-        <table className="w-full text-sm border rounded">
-          <thead className="bg-muted/40">
-            <tr>
-              <th className="px-3 py-2 text-left font-medium">Channel</th>
-              <th className="px-3 py-2 text-right font-medium">Planned</th>
-              <th className="px-3 py-2 text-right font-medium">Actual</th>
-              <th className="px-3 py-2 text-right font-medium">Variance %</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {metrics.map((m) => (
-              <tr key={m.name}>
-                <td className="px-3 py-2">{m.name}</td>
-                <td className="px-3 py-2 text-right font-mono">
-                  {plan.currency} {(m.planned / 100).toLocaleString()}
-                </td>
-                <td className="px-3 py-2 text-right font-mono">
-                  {plan.currency} {(m.actual / 100).toLocaleString()}
-                </td>
-                <td className="px-3 py-2 text-right font-mono">
-                  {computeVariancePct(m.planned, m.actual).toFixed(1)}%
-                </td>
+      <section className="zeus-panel">
+        <div className="zeus-panel-head">
+          <h3>Channel performance</h3>
+          <span className="zeus-panel-head-meta">{metrics.length} channel{metrics.length === 1 ? '' : 's'}</span>
+        </div>
+        {metrics.length === 0 ? (
+          <div className="zeus-panel-empty">No channels to report on yet.</div>
+        ) : (
+          <table className="zeus-ledger">
+            <thead>
+              <tr>
+                <th>Channel</th>
+                <th className="num">Planned</th>
+                <th className="num">Actual</th>
+                <th className="num">Variance %</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {metrics.map((m) => {
+                const pct = computeVariancePct(m.planned, m.actual);
+                return (
+                  <tr key={m.name}>
+                    <td>{m.name}</td>
+                    <td className="num">{plan.currency} {(m.planned / 100).toLocaleString()}</td>
+                    <td className="num">{plan.currency} {(m.actual / 100).toLocaleString()}</td>
+                    <td
+                      className="num"
+                      style={{
+                        color:
+                          pct > 10
+                            ? 'var(--rag-red-deep, var(--rag-red))'
+                            : pct < -10
+                              ? 'var(--rag-green-deep, var(--rag-green))'
+                              : undefined,
+                      }}
+                    >
+                      {pct > 0 ? '+' : ''}{pct.toFixed(1)}%
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </section>
     </div>
   );

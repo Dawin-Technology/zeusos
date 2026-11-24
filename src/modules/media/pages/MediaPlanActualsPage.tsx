@@ -38,21 +38,30 @@ export default function MediaPlanActualsPage() {
     setBuys(freshBuys);
   }
 
-  if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>;
-  if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>;
-  if (!plan)   return <p className="p-6 text-sm text-muted-foreground">Plan not found.</p>;
+  if (loading) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading…</p>;
+  if (error)   return <div style={{ padding: 'var(--pad-page)' }}><div className="zeus-note danger">Error: {error}</div></div>;
+  if (!plan)   return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Plan not found.</p>;
 
   return (
-    <div className="space-y-6 p-6">
-      <nav className="text-sm text-muted-foreground">
-        <Link to="/media" className="hover:underline">Media Plans</Link> ›{' '}
-        <Link to={`/media/${planId}`} className="hover:underline">{plan.title}</Link> › Actuals
-      </nav>
-
-      <h1 className="text-xl font-semibold">Post Actuals — {plan.title}</h1>
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-5">
+      <div className="zeus-page-head">
+        <Link to={`/media/${planId}`} className="zeus-back-link">← {plan.title}</Link>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1>Post Actuals</h1>
+          </div>
+        </div>
+      </div>
 
       {saved && (
-        <div className="rounded bg-[var(--rag-green-soft)] px-3 py-2 text-sm text-[var(--rag-green)]">
+        <div
+          className="zeus-note"
+          style={{
+            background: 'var(--rag-green-soft)',
+            color: 'var(--rag-green-deep, var(--rag-green))',
+            borderColor: 'color-mix(in oklab, var(--rag-green) 24%, transparent)',
+          }}
+        >
           {saved}
         </div>
       )}
@@ -65,27 +74,43 @@ export default function MediaPlanActualsPage() {
         />
       ) : (
         <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">
+          <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>
             Select a buy to reconcile actual spend:
           </p>
-          <ul className="divide-y rounded border">
-            {buys.map((buy) => (
-              <li
-                key={buy.id}
-                className="flex items-center justify-between p-3 hover:bg-muted/20 cursor-pointer"
-                onClick={() => setActiveBuy(buy)}
-              >
-                <div>
-                  <span className="font-medium">{buy.vehicleName}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{buy.vehicleType}</span>
-                </div>
-                <div className="text-sm font-mono text-muted-foreground">
-                  Planned: {plan.currency} {(buy.plannedMinor / 100).toLocaleString()} ·
-                  Actual: {plan.currency} {(buy.actualMinor / 100).toLocaleString()}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="zeus-panel">
+            {buys.length === 0 ? (
+              <div className="zeus-panel-empty">
+                No buys to reconcile — add a buy to this plan first.
+              </div>
+            ) : (
+              <ul className="zeus-row-list">
+                {buys.map((buy) => (
+                  <li
+                    key={buy.id}
+                    className="zeus-row"
+                    style={{ gridTemplateColumns: '1fr auto', cursor: 'pointer' }}
+                    onClick={() => setActiveBuy(buy)}
+                  >
+                    <div>
+                      <span style={{ fontWeight: 600 }}>{buy.vehicleName}</span>
+                      <div className="zeus-row-sub">{buy.vehicleType}</div>
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)',
+                        fontSize: 12,
+                        color: 'var(--fg-tertiary)',
+                        textAlign: 'right',
+                      }}
+                    >
+                      <div>Planned {plan.currency} {(buy.plannedMinor / 100).toLocaleString()}</div>
+                      <div>Actual {plan.currency} {(buy.actualMinor / 100).toLocaleString()}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
     </div>
