@@ -37,9 +37,9 @@ export default function JournalEntryDetailPage() {
       .finally(() => setLoading(false));
   }, [jeId]);
 
-  if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading journal entry…</p>;
-  if (error) return <p className="p-6 text-sm text-destructive">Error: {error}</p>;
-  if (!je) return <p className="p-6 text-sm text-muted-foreground">Journal entry not found.</p>;
+  if (loading) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading journal entry…</p>;
+  if (error) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--rag-red)' }}>Error: {error}</p>;
+  if (!je) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Journal entry not found.</p>;
 
   const totalDebits = je.debits.reduce((sum, line) => sum + line.amountMinor, 0);
   const totalCredits = je.credits.reduce((sum, line) => sum + line.amountMinor, 0);
@@ -47,113 +47,112 @@ export default function JournalEntryDetailPage() {
   const isFromPO = je.sourceDocKind === 'PurchaseOrderRaised';
 
   return (
-    <div className="space-y-6 p-6">
-      <header>
-        <Link
-          to="/procurement/journal-entries"
-          className="text-xs text-muted-foreground hover:underline"
-        >
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-6">
+      <header className="zeus-page-head">
+        <Link to="/procurement/journal-entries" className="zeus-back-link">
           ← All journal entries
         </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="font-mono text-xl font-semibold" data-testid="je-id">{je.id}</h1>
-          <span className={`rounded px-2 py-0.5 text-xs font-medium ${
-            balanced ? 'bg-[var(--rag-green-soft)] text-[var(--rag-green)]' : 'bg-[var(--rag-red-soft)] text-[var(--rag-red)]'
-          }`}>
-            {balanced ? 'Balanced' : 'UNBALANCED'}
-          </span>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1 className="mono" data-testid="je-id">{je.id}</h1>
+            <span className={`zeus-state-pill ${balanced ? 'green' : 'red'}`}>
+              {balanced ? 'Balanced' : 'Unbalanced'}
+            </span>
+          </div>
         </div>
       </header>
 
-      <section className="rounded border bg-card p-4">
-        <h2 className="mb-3 text-sm font-medium">Posting metadata</h2>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm md:grid-cols-3">
-          <div>
-            <dt className="text-xs text-muted-foreground">Kind</dt>
-            <dd>{je.kind}</dd>
+      <section className="zeus-panel">
+        <div className="zeus-panel-head">
+          <h2>Posting metadata</h2>
+        </div>
+        <div className="zeus-panel-pad">
+          <div className="zeus-def-grid">
+            <div className="zeus-def">
+              <span className="zeus-def-label">Kind</span>
+              <span className="zeus-def-value">{je.kind}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Currency</span>
+              <span className="zeus-def-value">{je.currency}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Posted at</span>
+              <span className="zeus-def-value">{formatDate(je.postedAt)}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Source kind</span>
+              <span className="zeus-def-value">{je.sourceDocKind}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Source ID</span>
+              <span className="zeus-def-value mono">
+                {isFromPO ? (
+                  <Link
+                    to={`/procurement/purchase-orders/${je.sourceDocId}`}
+                    className="hover:underline"
+                    data-testid="je-source-po-link"
+                  >
+                    {je.sourceDocId}
+                  </Link>
+                ) : (
+                  je.sourceDocId
+                )}
+              </span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Idempotency key</span>
+              <span className="zeus-def-value mono">{je.idempotencyKey || '—'}</span>
+            </div>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Currency</dt>
-            <dd>{je.currency}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Posted at</dt>
-            <dd>{formatDate(je.postedAt)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Source kind</dt>
-            <dd className="text-xs">{je.sourceDocKind}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Source ID</dt>
-            <dd className="font-mono text-xs">
-              {isFromPO ? (
-                <Link
-                  to={`/procurement/purchase-orders/${je.sourceDocId}`}
-                  className="hover:underline"
-                  data-testid="je-source-po-link"
-                >
-                  {je.sourceDocId}
-                </Link>
-              ) : (
-                je.sourceDocId
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Idempotency key</dt>
-            <dd className="font-mono text-xs">{je.idempotencyKey || '—'}</dd>
-          </div>
-        </dl>
+        </div>
       </section>
 
-      <section className="rounded border bg-card p-4" data-testid="je-lines-section">
-        <h2 className="mb-3 text-sm font-medium">Double-entry breakdown</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      <section className="zeus-panel" data-testid="je-lines-section">
+        <div className="zeus-panel-head">
+          <h2>Double-entry breakdown</h2>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="zeus-ledger">
             <thead>
-              <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-                <th className="py-2 font-medium">Account</th>
-                <th className="py-2 font-medium">Description</th>
-                <th className="py-2 text-right font-medium">Debit</th>
-                <th className="py-2 text-right font-medium">Credit</th>
+              <tr>
+                <th>Account</th>
+                <th>Description</th>
+                <th className="num">Debit</th>
+                <th className="num">Credit</th>
               </tr>
             </thead>
             <tbody>
               {je.debits.map((line, i) => (
-                <tr key={`debit-${i}`} className="border-t">
-                  <td className="py-2">
-                    <span className="font-mono text-xs">{line.accountCode}</span>{' '}
-                    <span className="text-muted-foreground">{line.accountName}</span>
+                <tr key={`debit-${i}`}>
+                  <td>
+                    <span className="acct-code">{line.accountCode}</span>
+                    <span>{line.accountName}</span>
                   </td>
-                  <td className="py-2 text-xs text-muted-foreground">{line.description}</td>
-                  <td className="py-2 text-right font-medium">
-                    {formatMoney(line.amountMinor, je.currency)}
-                  </td>
-                  <td className="py-2 text-right text-muted-foreground">—</td>
+                  <td className="dim">{line.description}</td>
+                  <td className="num">{formatMoney(line.amountMinor, je.currency)}</td>
+                  <td className="num dim">—</td>
                 </tr>
               ))}
               {je.credits.map((line, i) => (
-                <tr key={`credit-${i}`} className="border-t">
-                  <td className="py-2">
-                    <span className="font-mono text-xs">{line.accountCode}</span>{' '}
-                    <span className="text-muted-foreground">{line.accountName}</span>
+                <tr key={`credit-${i}`}>
+                  <td>
+                    <span className="acct-code">{line.accountCode}</span>
+                    <span>{line.accountName}</span>
                   </td>
-                  <td className="py-2 text-xs text-muted-foreground">{line.description}</td>
-                  <td className="py-2 text-right text-muted-foreground">—</td>
-                  <td className="py-2 text-right font-medium">
-                    {formatMoney(line.amountMinor, je.currency)}
-                  </td>
+                  <td className="dim">{line.description}</td>
+                  <td className="num dim">—</td>
+                  <td className="num">{formatMoney(line.amountMinor, je.currency)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t bg-muted/30 text-xs font-semibold">
-                <td colSpan={2} className="py-2">Total</td>
-                <td className="py-2 text-right" data-testid="debit-total">
+              <tr>
+                <td colSpan={2}>Total</td>
+                <td className="num" data-testid="debit-total">
                   {formatMoney(totalDebits, je.currency)}
                 </td>
-                <td className="py-2 text-right" data-testid="credit-total">
+                <td className="num" data-testid="credit-total">
                   {formatMoney(totalCredits, je.currency)}
                 </td>
               </tr>

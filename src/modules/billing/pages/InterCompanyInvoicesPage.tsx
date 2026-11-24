@@ -53,34 +53,37 @@ export function InterCompanyInvoicesPage() {
         title="Inter-company invoices"
         body="Subsidiary → Parent settlement. Amounts shown in the subsidiary's currency — FX conversion happens later, at the client-invoice consolidation step."
         actions={
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as InterCompanyInvoiceStatus | 'ALL')}
-            className="input"
-            style={{ width: 'auto' }}
-          >
-            <option value="ALL">All statuses</option>
-            {INTERCOMPANY_INVOICE_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {INTERCOMPANY_INVOICE_STATUS_LABEL[s]}
-              </option>
-            ))}
-          </select>
+          <div className="zeus-filter-bar">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as InterCompanyInvoiceStatus | 'ALL')}
+              className="zeus-select"
+            >
+              <option value="ALL">All statuses</option>
+              {INTERCOMPANY_INVOICE_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {INTERCOMPANY_INVOICE_STATUS_LABEL[s]}
+                </option>
+              ))}
+            </select>
+          </div>
         }
       />
 
       {loading && <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading…</p>}
-      {error && <p style={{ fontSize: 13, color: 'var(--rag-red)' }}>Failed to load: {error}</p>}
+      {error && <div className="zeus-note danger">Failed to load: {error}</div>}
 
       {!loading && !error && invoices.length === 0 && (
-        <div className="card card-pad" style={{ borderStyle: 'dashed', textAlign: 'center', color: 'var(--fg-tertiary)', fontSize: 13 }}>
-          No inter-company invoices yet. The onIWOClosed trigger that
-          raises these automatically lands in Phase 3.B (IWO state machine).
+        <div className="zeus-panel">
+          <div className="zeus-panel-empty">
+            No inter-company invoices yet. The onIWOClosed trigger that
+            raises these automatically lands in Phase 3.B (IWO state machine).
+          </div>
         </div>
       )}
 
       {!loading && invoices.length > 0 && (
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <div className="zeus-panel">
           <table className="tbl">
             <thead>
               <tr>

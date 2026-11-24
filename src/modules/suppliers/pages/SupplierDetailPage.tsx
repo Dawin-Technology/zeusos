@@ -93,26 +93,26 @@ export default function SupplierDetailPage() {
     }
   }
 
-  if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading supplier…</p>;
-  if (error) return <p className="p-6 text-sm text-destructive">Error: {error}</p>;
-  if (!supplier) return <p className="p-6 text-sm text-muted-foreground">Supplier not found.</p>;
+  if (loading) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading supplier…</p>;
+  if (error) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--rag-red)' }}>Error: {error}</p>;
+  if (!supplier) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Supplier not found.</p>;
 
   return (
-    <div className="space-y-6 p-6">
-      <header>
-        <Link to="/suppliers" className="text-xs text-muted-foreground hover:underline">
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-6">
+      <header className="zeus-page-head">
+        <Link to="/suppliers" className="zeus-back-link">
           ← All suppliers
         </Link>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-xl font-semibold" data-testid="supplier-name">{supplier.name}</h1>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1 data-testid="supplier-name">{supplier.name}</h1>
             <SupplierKindBadge kind={supplier.kind} />
             <SupplierStatusBadge status={supplier.status} />
           </div>
-          <div className="flex gap-2">
+          <div className="zeus-page-head-actions">
             <Link
               to={`/suppliers/${supplier.id}/edit`}
-              className="rounded border px-3 py-1 text-sm"
+              className="zeus-outline-btn"
               data-testid="supplier-edit"
             >
               Edit
@@ -121,7 +121,7 @@ export default function SupplierDetailPage() {
               <button
                 onClick={handleDeactivate}
                 disabled={actionPending}
-                className="rounded border px-3 py-1 text-sm disabled:opacity-60"
+                className="zeus-outline-btn"
               >
                 Deactivate
               </button>
@@ -130,7 +130,7 @@ export default function SupplierDetailPage() {
               <button
                 onClick={handleActivate}
                 disabled={actionPending}
-                className="rounded border px-3 py-1 text-sm disabled:opacity-60"
+                className="zeus-outline-btn"
               >
                 Reactivate
               </button>
@@ -139,7 +139,7 @@ export default function SupplierDetailPage() {
               <button
                 onClick={handleBlacklist}
                 disabled={actionPending}
-                className="rounded border border-[var(--rag-red)] px-3 py-1 text-sm text-[var(--rag-red)] disabled:opacity-60"
+                className="zeus-outline-btn danger"
               >
                 Blacklist…
               </button>
@@ -148,7 +148,7 @@ export default function SupplierDetailPage() {
               <button
                 onClick={handleActivate}
                 disabled={actionPending}
-                className="rounded border border-[var(--rag-red)] px-3 py-1 text-sm text-[var(--rag-red)] disabled:opacity-60"
+                className="zeus-outline-btn danger"
               >
                 Lift blacklist
               </button>
@@ -157,98 +157,118 @@ export default function SupplierDetailPage() {
         </div>
       </header>
 
-      <section className="rounded border bg-card p-4">
-        <h2 className="mb-3 text-sm font-medium">Profile</h2>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm md:grid-cols-3">
-          <div>
-            <dt className="text-xs text-muted-foreground">Country</dt>
-            <dd>{supplier.countryCode ?? '—'}</dd>
+      <section className="zeus-panel">
+        <div className="zeus-panel-head">
+          <h2>Profile</h2>
+        </div>
+        <div className="zeus-panel-pad">
+          <div className="zeus-def-grid">
+            <div className="zeus-def">
+              <span className="zeus-def-label">Country</span>
+              <span className="zeus-def-value">{supplier.countryCode ?? '—'}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Currency</span>
+              <span className="zeus-def-value">{supplier.currency}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Payment terms</span>
+              <span className="zeus-def-value">{supplier.paymentTerms}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Tax ID</span>
+              <span className="zeus-def-value mono">{supplier.taxId ?? '—'}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Created</span>
+              <span className="zeus-def-value">{formatDate(supplier.createdAt)}</span>
+            </div>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Currency</dt>
-            <dd>{supplier.currency}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Payment terms</dt>
-            <dd>{supplier.paymentTerms}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Tax ID</dt>
-            <dd className="font-mono text-xs">{supplier.taxId ?? '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Created</dt>
-            <dd>{formatDate(supplier.createdAt)}</dd>
-          </div>
-        </dl>
+        </div>
       </section>
 
       {supplier.primaryContact && (
-        <section className="rounded border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium">Primary contact</h2>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm md:grid-cols-3">
-            <div>
-              <dt className="text-xs text-muted-foreground">Name</dt>
-              <dd>{supplier.primaryContact.name}</dd>
+        <section className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h2>Primary contact</h2>
+          </div>
+          <div className="zeus-panel-pad">
+            <div className="zeus-def-grid">
+              <div className="zeus-def">
+                <span className="zeus-def-label">Name</span>
+                <span className="zeus-def-value">{supplier.primaryContact.name}</span>
+              </div>
+              {supplier.primaryContact.role && (
+                <div className="zeus-def">
+                  <span className="zeus-def-label">Role</span>
+                  <span className="zeus-def-value">{supplier.primaryContact.role}</span>
+                </div>
+              )}
+              {supplier.primaryContact.email && (
+                <div className="zeus-def">
+                  <span className="zeus-def-label">Email</span>
+                  <span className="zeus-def-value">
+                    <a href={`mailto:${supplier.primaryContact.email}`} className="hover:underline" style={{ color: 'var(--fg-primary)' }}>
+                      {supplier.primaryContact.email}
+                    </a>
+                  </span>
+                </div>
+              )}
+              {supplier.primaryContact.phone && (
+                <div className="zeus-def">
+                  <span className="zeus-def-label">Phone</span>
+                  <span className="zeus-def-value">{supplier.primaryContact.phone}</span>
+                </div>
+              )}
             </div>
-            {supplier.primaryContact.role && (
-              <div>
-                <dt className="text-xs text-muted-foreground">Role</dt>
-                <dd>{supplier.primaryContact.role}</dd>
-              </div>
-            )}
-            {supplier.primaryContact.email && (
-              <div>
-                <dt className="text-xs text-muted-foreground">Email</dt>
-                <dd>
-                  <a href={`mailto:${supplier.primaryContact.email}`} className="hover:underline">
-                    {supplier.primaryContact.email}
-                  </a>
-                </dd>
-              </div>
-            )}
-            {supplier.primaryContact.phone && (
-              <div>
-                <dt className="text-xs text-muted-foreground">Phone</dt>
-                <dd>{supplier.primaryContact.phone}</dd>
-              </div>
-            )}
-          </dl>
+          </div>
         </section>
       )}
 
       {supplier.address && (
-        <section className="rounded border bg-card p-4">
-          <h2 className="mb-2 text-sm font-medium">Address</h2>
-          <p className="whitespace-pre-line text-sm">{supplier.address}</p>
+        <section className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h2>Address</h2>
+          </div>
+          <div className="zeus-panel-pad">
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--fg-primary)', whiteSpace: 'pre-line' }}>{supplier.address}</p>
+          </div>
         </section>
       )}
 
       {supplier.notes && (
-        <section className="rounded border bg-card p-4">
-          <h2 className="mb-2 text-sm font-medium">Notes</h2>
-          <p className="whitespace-pre-line text-sm">{supplier.notes}</p>
+        <section className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h2>Notes</h2>
+          </div>
+          <div className="zeus-panel-pad">
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--fg-primary)', whiteSpace: 'pre-line' }}>{supplier.notes}</p>
+          </div>
         </section>
       )}
 
       {supplier.tags && supplier.tags.length > 0 && (
-        <section className="rounded border bg-card p-4">
-          <h2 className="mb-2 text-sm font-medium">Tags</h2>
-          <div className="flex flex-wrap gap-1">
+        <section className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h2>Tags</h2>
+          </div>
+          <div className="zeus-panel-pad" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {supplier.tags.map((t) => (
-              <span key={t} className="rounded bg-muted px-2 py-0.5 text-xs">{t}</span>
+              <span key={t} className="zeus-state-pill">{t}</span>
             ))}
           </div>
         </section>
       )}
 
       {supplier.status === 'BLACKLISTED' && supplier.blacklistReason && (
-        <section className="rounded border border-[var(--rag-red)] bg-[var(--rag-red-soft)] p-4">
-          <h2 className="mb-2 text-sm font-medium text-[var(--rag-red)]">Blacklisted</h2>
-          <p className="text-sm text-[var(--rag-red)]">{supplier.blacklistReason}</p>
-          <p className="mt-1 text-xs text-[var(--rag-red)]">
-            on {formatDate(supplier.blacklistedAt)} by {supplier.blacklistedBy}
-          </p>
+        <section className="zeus-panel" style={{ background: 'var(--rag-red-soft)', borderColor: 'color-mix(in oklab, var(--rag-red) 30%, transparent)' }}>
+          <div className="zeus-panel-pad">
+            <h2 style={{ margin: '0 0 6px', font: '600 14px var(--font-sans)', color: 'var(--rag-red-deep, var(--rag-red))' }}>Blacklisted</h2>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--rag-red-deep, var(--rag-red))' }}>{supplier.blacklistReason}</p>
+            <p style={{ margin: '4px 0 0', fontSize: 11.5, color: 'var(--rag-red-deep, var(--rag-red))' }}>
+              on {formatDate(supplier.blacklistedAt)} by {supplier.blacklistedBy}
+            </p>
+          </div>
         </section>
       )}
     </div>

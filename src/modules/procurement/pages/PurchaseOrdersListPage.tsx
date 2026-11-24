@@ -80,50 +80,52 @@ export default function PurchaseOrdersListPage() {
         title="Purchase orders"
         body="Procurement ledger raised by approved talent invoices and paid media supplier invoices. Parent-org visibility only."
         actions={
-          <div className="flex gap-2">
-          <select
-            value={kindFilter}
-            onChange={(e) => setKindFilter(e.target.value as PurchaseOrderKind | 'ALL')}
-            className="rounded border px-2 py-1 text-sm"
-            data-testid="po-kind-filter"
-          >
-            {KIND_OPTIONS.map((k) => (
-              <option key={k} value={k}>{k === 'ALL' ? 'All kinds' : k}</option>
-            ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as PurchaseOrderStatus | 'ALL')}
-            className="rounded border px-2 py-1 text-sm"
-            data-testid="po-status-filter"
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s === 'ALL' ? 'All statuses' : s}</option>
-            ))}
-          </select>
-          <Link
-            to="/procurement/purchase-orders/new"
-            className="btn btn-primary"
-            data-testid="po-new-btn"
-          >
-            + New PO
-          </Link>
+          <div className="zeus-filter-bar">
+            <select
+              value={kindFilter}
+              onChange={(e) => setKindFilter(e.target.value as PurchaseOrderKind | 'ALL')}
+              className="zeus-select"
+              data-testid="po-kind-filter"
+            >
+              {KIND_OPTIONS.map((k) => (
+                <option key={k} value={k}>{k === 'ALL' ? 'All kinds' : k}</option>
+              ))}
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as PurchaseOrderStatus | 'ALL')}
+              className="zeus-select"
+              data-testid="po-status-filter"
+            >
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s === 'ALL' ? 'All statuses' : s}</option>
+              ))}
+            </select>
+            <Link
+              to="/procurement/purchase-orders/new"
+              className="btn btn-primary"
+              data-testid="po-new-btn"
+            >
+              + New PO
+            </Link>
           </div>
         }
       />
 
-      {loading && <p className="text-sm text-muted-foreground">Loading purchase orders…</p>}
-      {error && <p className="text-sm text-destructive">Error: {error}</p>}
+      {loading && <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading purchase orders…</p>}
+      {error && <div className="zeus-note danger">Error: {error}</div>}
 
       {!loading && !error && pos.length === 0 && (
-        <div className="card card-pad" style={{ borderStyle: 'dashed', textAlign: 'center', color: 'var(--fg-tertiary)', fontSize: 13 }}>
-          No purchase orders found. They are created automatically when talent invoices are
-          approved or media supplier invoices are paid.
+        <div className="zeus-panel">
+          <div className="zeus-panel-empty">
+            No purchase orders found. They are created automatically when talent invoices are
+            approved or media supplier invoices are paid.
+          </div>
         </div>
       )}
 
       {!loading && !error && pos.length > 0 && (
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <div className="zeus-panel">
           <table className="tbl" data-testid="po-table">
             <thead>
               <tr>

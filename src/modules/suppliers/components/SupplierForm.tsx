@@ -94,153 +94,170 @@ export function SupplierForm({ initial, submitLabel, onSave, onCancel }: Props) 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 rounded border bg-card p-5" data-testid="supplier-form">
-      <div>
-        <label className="mb-1 block text-sm font-medium">Supplier name *</label>
-        <input
-          required
-          value={values.name}
-          onChange={(e) => update('name', e.target.value)}
-          className="w-full rounded border px-2 py-1.5 text-sm"
-          placeholder="Next Media Services Ltd"
-          data-testid="supplier-name-input"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Kind *</label>
-          <select
-            value={values.kind}
-            onChange={(e) => update('kind', e.target.value as SupplierKind)}
-            className="w-full rounded border px-2 py-1.5 text-sm"
-            data-testid="supplier-kind-input"
-          >
-            {KIND_OPTIONS.map((k) => (
-              <option key={k} value={k}>{k}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Country (ISO)</label>
+    <form onSubmit={handleSubmit} className="zeus-panel" data-testid="supplier-form">
+      <div className="zeus-panel-pad" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <label>
+          <span className="zeus-field-label">Supplier name *</span>
           <input
-            value={values.countryCode}
-            onChange={(e) => update('countryCode', e.target.value.toUpperCase().slice(0, 2))}
-            className="w-full rounded border px-2 py-1.5 text-sm uppercase"
-            maxLength={2}
-            placeholder="UG"
+            required
+            value={values.name}
+            onChange={(e) => update('name', e.target.value)}
+            className="zeus-input"
+            placeholder="Next Media Services Ltd"
+            data-testid="supplier-name-input"
           />
+        </label>
+
+        <div className="zeus-form-grid">
+          <label>
+            <span className="zeus-field-label">Kind *</span>
+            <select
+              value={values.kind}
+              onChange={(e) => update('kind', e.target.value as SupplierKind)}
+              className="zeus-select"
+              data-testid="supplier-kind-input"
+            >
+              {KIND_OPTIONS.map((k) => (
+                <option key={k} value={k}>{k}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="zeus-field-label">Country (ISO)</span>
+            <input
+              value={values.countryCode}
+              onChange={(e) => update('countryCode', e.target.value.toUpperCase().slice(0, 2))}
+              className="zeus-input"
+              style={{ textTransform: 'uppercase' }}
+              maxLength={2}
+              placeholder="UG"
+            />
+          </label>
+          <label>
+            <span className="zeus-field-label">Currency *</span>
+            <select
+              value={values.currency}
+              onChange={(e) => update('currency', e.target.value as CurrencyCode)}
+              className="zeus-select"
+            >
+              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <label>
+            <span className="zeus-field-label">Payment terms *</span>
+            <select
+              value={values.paymentTerms}
+              onChange={(e) => update('paymentTerms', e.target.value as PaymentTerms)}
+              className="zeus-select"
+            >
+              {PAYMENT_TERMS.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </label>
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Currency *</label>
-          <select
-            value={values.currency}
-            onChange={(e) => update('currency', e.target.value as CurrencyCode)}
-            className="w-full rounded border px-2 py-1.5 text-sm"
-          >
-            {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Payment terms *</label>
-          <select
-            value={values.paymentTerms}
-            onChange={(e) => update('paymentTerms', e.target.value as PaymentTerms)}
-            className="w-full rounded border px-2 py-1.5 text-sm"
-          >
-            {PAYMENT_TERMS.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">Tax ID / TIN</label>
-        <input
-          value={values.taxId}
-          onChange={(e) => update('taxId', e.target.value)}
-          className="w-full rounded border px-2 py-1.5 text-sm"
-        />
-      </div>
-
-      <fieldset className="space-y-3 rounded border p-3">
-        <legend className="px-1 text-xs font-medium text-muted-foreground">Primary contact</legend>
-        <div className="grid grid-cols-2 gap-3">
+        <label>
+          <span className="zeus-field-label">Tax ID / TIN</span>
           <input
-            value={values.contactName}
-            onChange={(e) => update('contactName', e.target.value)}
-            className="rounded border px-2 py-1.5 text-sm"
-            placeholder="Name"
+            value={values.taxId}
+            onChange={(e) => update('taxId', e.target.value)}
+            className="zeus-input"
           />
-          <input
-            value={values.contactRole}
-            onChange={(e) => update('contactRole', e.target.value)}
-            className="rounded border px-2 py-1.5 text-sm"
-            placeholder="Role"
-          />
-          <input
-            type="email"
-            value={values.contactEmail}
-            onChange={(e) => update('contactEmail', e.target.value)}
-            className="rounded border px-2 py-1.5 text-sm"
-            placeholder="email@supplier.tld"
-          />
-          <input
-            value={values.contactPhone}
-            onChange={(e) => update('contactPhone', e.target.value)}
-            className="rounded border px-2 py-1.5 text-sm"
-            placeholder="+256 …"
-          />
-        </div>
-      </fieldset>
+        </label>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">Address</label>
-        <textarea
-          value={values.address}
-          onChange={(e) => update('address', e.target.value)}
-          rows={2}
-          className="w-full rounded border px-2 py-1.5 text-sm"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">Notes</label>
-        <textarea
-          value={values.notes}
-          onChange={(e) => update('notes', e.target.value)}
-          rows={2}
-          className="w-full rounded border px-2 py-1.5 text-sm"
-          placeholder="Risks, capacity, preferred slots…"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">Tags (comma-separated)</label>
-        <input
-          value={values.tagsCsv}
-          onChange={(e) => update('tagsCsv', e.target.value)}
-          className="w-full rounded border px-2 py-1.5 text-sm"
-          placeholder="radio, luganda, northern-uganda"
-        />
-      </div>
-
-      {error && <p className="text-sm text-destructive" data-testid="supplier-form-error">{error}</p>}
-
-      <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="rounded border px-4 py-1.5 text-sm">
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded bg-primary px-4 py-1.5 text-sm text-primary-foreground disabled:opacity-60"
-          data-testid="supplier-submit"
+        <fieldset
+          style={{
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 12,
+            padding: '14px 16px',
+            margin: 0,
+          }}
         >
-          {saving ? 'Saving…' : submitLabel}
-        </button>
+          <legend
+            style={{
+              padding: '0 6px',
+              font: '600 10.5px var(--font-mono)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--fg-tertiary)',
+            }}
+          >
+            Primary contact
+          </legend>
+          <div className="zeus-form-grid" style={{ marginTop: 6 }}>
+            <input
+              value={values.contactName}
+              onChange={(e) => update('contactName', e.target.value)}
+              className="zeus-input"
+              placeholder="Name"
+            />
+            <input
+              value={values.contactRole}
+              onChange={(e) => update('contactRole', e.target.value)}
+              className="zeus-input"
+              placeholder="Role"
+            />
+            <input
+              type="email"
+              value={values.contactEmail}
+              onChange={(e) => update('contactEmail', e.target.value)}
+              className="zeus-input"
+              placeholder="email@supplier.tld"
+            />
+            <input
+              value={values.contactPhone}
+              onChange={(e) => update('contactPhone', e.target.value)}
+              className="zeus-input"
+              placeholder="+256 …"
+            />
+          </div>
+        </fieldset>
+
+        <label>
+          <span className="zeus-field-label">Address</span>
+          <textarea
+            value={values.address}
+            onChange={(e) => update('address', e.target.value)}
+            rows={2}
+            className="zeus-textarea"
+          />
+        </label>
+
+        <label>
+          <span className="zeus-field-label">Notes</span>
+          <textarea
+            value={values.notes}
+            onChange={(e) => update('notes', e.target.value)}
+            rows={2}
+            className="zeus-textarea"
+            placeholder="Risks, capacity, preferred slots…"
+          />
+        </label>
+
+        <label>
+          <span className="zeus-field-label">Tags (comma-separated)</span>
+          <input
+            value={values.tagsCsv}
+            onChange={(e) => update('tagsCsv', e.target.value)}
+            className="zeus-input"
+            placeholder="radio, luganda, northern-uganda"
+          />
+        </label>
+
+        {error && <div className="zeus-note danger" data-testid="supplier-form-error">{error}</div>}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button type="button" onClick={onCancel} className="zeus-outline-btn">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="btn btn-primary"
+            data-testid="supplier-submit"
+          >
+            {saving ? 'Saving…' : submitLabel}
+          </button>
+        </div>
       </div>
     </form>
   );

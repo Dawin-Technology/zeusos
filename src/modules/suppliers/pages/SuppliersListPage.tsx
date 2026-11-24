@@ -62,55 +62,56 @@ export default function SuppliersListPage() {
         title="Suppliers"
         body="Shared directory of media houses, talent agencies, production houses, and other external vendors. Linked to media supplier invoices and procurement POs."
       />
-      <div className="flex flex-wrap gap-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name…"
-            className="input"
-            style={{ width: 'auto' }}
-            data-testid="supplier-search"
-          />
-          <select
-            value={kindFilter}
-            onChange={(e) => setKindFilter(e.target.value as SupplierKind | 'ALL')}
-            className="rounded border px-2 py-1 text-sm"
-            data-testid="supplier-kind-filter"
-          >
-            {KIND_OPTIONS.map((k) => (
-              <option key={k} value={k}>{k === 'ALL' ? 'All kinds' : k}</option>
-            ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as SupplierStatus | 'ALL')}
-            className="rounded border px-2 py-1 text-sm"
-            data-testid="supplier-status-filter"
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s === 'ALL' ? 'All statuses' : s}</option>
-            ))}
-          </select>
-          <Link
-            to="/suppliers/new"
-            className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground"
-            data-testid="supplier-new"
-          >
-            + New supplier
-          </Link>
-        </div>
+      <div className="zeus-filter-bar">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name…"
+          className="zeus-input"
+          data-testid="supplier-search"
+        />
+        <select
+          value={kindFilter}
+          onChange={(e) => setKindFilter(e.target.value as SupplierKind | 'ALL')}
+          className="zeus-select"
+          data-testid="supplier-kind-filter"
+        >
+          {KIND_OPTIONS.map((k) => (
+            <option key={k} value={k}>{k === 'ALL' ? 'All kinds' : k}</option>
+          ))}
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as SupplierStatus | 'ALL')}
+          className="zeus-select"
+          data-testid="supplier-status-filter"
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>{s === 'ALL' ? 'All statuses' : s}</option>
+          ))}
+        </select>
+        <Link
+          to="/suppliers/new"
+          className="btn btn-primary"
+          data-testid="supplier-new"
+        >
+          + New supplier
+        </Link>
+      </div>
 
-      {loading && <p className="text-sm text-muted-foreground">Loading suppliers…</p>}
-      {error && <p className="text-sm text-destructive">Error: {error}</p>}
+      {loading && <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading suppliers…</p>}
+      {error && <div className="zeus-note danger">Error: {error}</div>}
 
       {!loading && !error && filtered.length === 0 && (
-        <div className="card card-pad" style={{ borderStyle: 'dashed', textAlign: 'center', color: 'var(--fg-tertiary)', fontSize: 13 }}>
-          No suppliers found. Click &quot;New supplier&quot; to add one.
+        <div className="zeus-panel">
+          <div className="zeus-panel-empty">
+            No suppliers found. Click &quot;New supplier&quot; to add one.
+          </div>
         </div>
       )}
 
       {!loading && !error && filtered.length > 0 && (
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <div className="zeus-panel">
           <table className="tbl" data-testid="supplier-table">
             <thead>
               <tr>

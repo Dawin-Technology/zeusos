@@ -11,6 +11,7 @@ import { SUBSIDIARY_IDS } from '@/core/settings/types';
 import type { SubsidiaryId } from '@/core/settings/types';
 import { resolveAdapter } from '../services/gl-adapter.service';
 import type { GLConnectionHealth } from '../types/gl.types';
+import { PageHero } from '@/shared/components/refresh';
 
 interface Row {
   orgId: SubsidiaryId;
@@ -50,79 +51,74 @@ export function GLAdapterStatusPage() {
   }, []);
 
   return (
-    <div className="space-y-6 p-6">
-      <header>
-        <h1 className="text-xl font-semibold">GL Adapter Status</h1>
-        <p className="text-sm text-muted-foreground">
-          Per-subsidiary connection health, queue depth, and last sync.
-          The default adapter writes to the gl_postings audit collection;
-          QBO/Xero connections land in Phase 5.
-        </p>
-      </header>
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-6">
+      <PageHero
+        eyebrow="Billing · Finance"
+        title="GL adapter status"
+        body="Per-subsidiary connection health, queue depth, and last sync. The default adapter writes to the gl_postings audit collection; QBO/Xero connections land in Phase 5."
+      />
 
-      {loading && <p className="text-sm text-muted-foreground">Probing…</p>}
+      {loading && <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>Probing…</p>}
 
       {!loading && (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="py-2">Organisation</th>
-              <th className="py-2">Adapter</th>
-              <th className="py-2">Status</th>
-              <th className="py-2 text-right">Queue depth</th>
-              <th className="py-2">Last sync</th>
-              <th className="py-2">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.orgId} className="border-t">
-                <td className="py-2 font-mono text-xs">{row.orgId}</td>
-                <td className="py-2 text-xs">{row.health?.adapter ?? '—'}</td>
-                <td className="py-2 text-xs">
-                  {row.health ? (
-                    <span
-                      className={statusBadgeClass(row.health.status)}
-                    >
-                      {row.health.status}
-                    </span>
-                  ) : (
-                    <span className="rounded bg-[var(--rag-red-soft)] px-2 py-0.5 text-xs text-[var(--rag-red)]">
-                      ERROR
-                    </span>
-                  )}
-                </td>
-                <td className="py-2 text-right font-mono">
-                  {row.health?.queueDepth ?? '—'}
-                </td>
-                <td className="py-2 text-xs">
-                  {row.health?.lastSyncAt
-                    ? String(row.health.lastSyncAt)
-                    : '—'}
-                </td>
-                <td className="py-2 text-xs text-muted-foreground">
-                  {row.error ?? row.health?.message ?? ''}
-                </td>
+        <div className="zeus-panel">
+          <table className="zeus-ledger">
+            <thead>
+              <tr>
+                <th>Organisation</th>
+                <th>Adapter</th>
+                <th>Status</th>
+                <th className="num">Queue depth</th>
+                <th>Last sync</th>
+                <th>Notes</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.orgId}>
+                  <td style={{ fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)', fontSize: 12 }}>
+                    {row.orgId}
+                  </td>
+                  <td className="dim" style={{ fontSize: 12.5 }}>{row.health?.adapter ?? '—'}</td>
+                  <td>
+                    {row.health ? (
+                      <span className={statusPillClass(row.health.status)}>
+                        {row.health.status}
+                      </span>
+                    ) : (
+                      <span className="zeus-state-pill red">ERROR</span>
+                    )}
+                  </td>
+                  <td className="num" style={{ fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)' }}>
+                    {row.health?.queueDepth ?? '—'}
+                  </td>
+                  <td className="dim" style={{ fontSize: 12.5 }}>
+                    {row.health?.lastSyncAt ? String(row.health.lastSyncAt) : '—'}
+                  </td>
+                  <td className="dim" style={{ fontSize: 12.5 }}>
+                    {row.error ?? row.health?.message ?? ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
 }
 
-function statusBadgeClass(status: GLConnectionHealth['status']): string {
+function statusPillClass(status: GLConnectionHealth['status']): string {
   switch (status) {
     case 'CONNECTED':
-      return 'rounded bg-[var(--rag-green-soft)] px-2 py-0.5 text-xs text-[var(--rag-green)]';
+      return 'zeus-state-pill green';
     case 'NOT_CONFIGURED':
-      return 'rounded bg-[var(--bg-sunken)] px-2 py-0.5 text-xs text-muted-foreground';
+      return 'zeus-state-pill';
     case 'DISCONNECTED':
-      return 'rounded bg-[var(--rag-amber-soft)] px-2 py-0.5 text-xs text-[var(--rag-amber)]';
+      return 'zeus-state-pill amber';
     case 'ERROR':
     default:
-      return 'rounded bg-[var(--rag-red-soft)] px-2 py-0.5 text-xs text-[var(--rag-red)]';
+      return 'zeus-state-pill red';
   }
 }
 
