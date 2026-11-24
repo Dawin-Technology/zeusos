@@ -72,12 +72,11 @@ export function ClientInvoicesPage() {
         title="Client invoices"
         body="Issued by Zeus Group to external clients. Subsidiary identity is never shown on these documents."
         actions={
-          <>
+          <div className="zeus-filter-bar">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as ClientInvoiceStatus | 'ALL')}
-              className="input"
-              style={{ width: 'auto' }}
+              className="zeus-select"
             >
               <option value="ALL">All statuses</option>
               {CLIENT_INVOICE_STATUSES.map((s) => (
@@ -91,20 +90,22 @@ export function ClientInvoicesPage() {
               value={clientIdFilter}
               onChange={(e) => setClientIdFilter(e.target.value)}
               placeholder="Filter by client ID"
-              className="input"
-              style={{ width: 180 }}
+              className="zeus-input"
+              style={{ width: 200 }}
             />
-          </>
+          </div>
         }
       />
 
       {loading && <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading invoices…</p>}
-      {error && <p style={{ fontSize: 13, color: 'var(--rag-red)' }}>Failed to load invoices: {error}</p>}
+      {error && <div className="zeus-note danger">Failed to load invoices: {error}</div>}
 
       {!loading && !error && invoices.length === 0 && (
-        <div className="card card-pad" style={{ borderStyle: 'dashed', textAlign: 'center', color: 'var(--fg-tertiary)', fontSize: 13 }}>
-          No client invoices yet. The Quote → Invoice flow lands once
-          Phase 3.C (Pricing) and Phase 3.D (AM UI) ship.
+        <div className="zeus-panel">
+          <div className="zeus-panel-empty">
+            No client invoices yet. The Quote → Invoice flow lands once
+            Phase 3.C (Pricing) and Phase 3.D (AM UI) ship.
+          </div>
         </div>
       )}
 

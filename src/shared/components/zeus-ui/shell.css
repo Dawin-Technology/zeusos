@@ -1158,7 +1158,242 @@
   background: color-mix(in oklab, var(--rag-red) 14%, var(--bg-surface));
 }
 [data-skin="soft"][data-theme="dark"] .zeus-select,
-[data-skin="soft"][data-theme="dark"] .zeus-input {
+[data-skin="soft"][data-theme="dark"] .zeus-input,
+[data-skin="soft"][data-theme="dark"] .zeus-textarea {
   background: var(--bg-sunken);
   border-color: var(--border-default);
+}
+
+/* ============================================================
+   Soft-skin detail-page atoms — PR 4
+   Shared across Procurement / Suppliers / Billing detail views.
+   `.zeus-page-head` replaces the ad-hoc "back link + title + state
+   pills + actions" header block. `.zeus-def-grid` is the dl/dt/dd
+   metadata grid pattern. `.zeus-form-grid` + `.zeus-textarea`
+   round out the form family started in PR 3.
+   ============================================================ */
+[data-skin="soft"] .zeus-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+[data-skin="soft"] .zeus-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--fg-tertiary);
+  text-decoration: none;
+  width: fit-content;
+}
+[data-skin="soft"] .zeus-back-link:hover {
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .zeus-page-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+[data-skin="soft"] .zeus-page-head-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+[data-skin="soft"] .zeus-page-head-title h1 {
+  margin: 0;
+  font: 600 20px/1.2 var(--font-sans);
+  letter-spacing: -0.015em;
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .zeus-page-head-title h1.mono {
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  letter-spacing: 0;
+  font-size: 18px;
+}
+[data-skin="soft"] .zeus-page-head-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Metadata definition grid (profile cards, PO details, JE metadata) */
+[data-skin="soft"] .zeus-def-grid {
+  display: grid;
+  gap: 14px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+[data-skin="soft"] .zeus-def { min-width: 0; }
+[data-skin="soft"] .zeus-def-label {
+  display: block;
+  font: 600 10.5px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  margin-bottom: 3px;
+}
+[data-skin="soft"] .zeus-def-value {
+  display: block;
+  font: 500 13px var(--font-sans);
+  color: var(--fg-primary);
+  letter-spacing: -0.005em;
+  word-break: break-word;
+}
+[data-skin="soft"] .zeus-def-value.mono {
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+[data-skin="soft"] .zeus-def-value.strong { font-weight: 600; }
+
+/* Form grid (two-col responsive) + textarea sibling of .zeus-input */
+[data-skin="soft"] .zeus-form-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+[data-skin="soft"] .zeus-form-grid .full { grid-column: 1 / -1; }
+@media (max-width: 640px) {
+  [data-skin="soft"] .zeus-form-grid { grid-template-columns: 1fr; }
+}
+[data-skin="soft"] .zeus-textarea {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  padding: 8px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  color: var(--fg-primary);
+  font: 500 13px var(--font-sans);
+  letter-spacing: -0.005em;
+  resize: vertical;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+[data-skin="soft"] .zeus-textarea:hover { border-color: var(--border-strong); }
+[data-skin="soft"] .zeus-textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Inline-error note (used by forms + error banners) */
+[data-skin="soft"] .zeus-note {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font: 500 13px var(--font-sans);
+  letter-spacing: -0.005em;
+  border: 1px solid transparent;
+}
+[data-skin="soft"] .zeus-note.danger {
+  background: var(--rag-red-soft);
+  color: var(--rag-red-deep, var(--rag-red));
+  border-color: color-mix(in oklab, var(--rag-red) 24%, transparent);
+}
+[data-skin="soft"] .zeus-note.muted {
+  background: var(--bg-sunken);
+  color: var(--fg-tertiary);
+  border-color: var(--border-subtle);
+  font-size: 12.5px;
+}
+
+/* Small ghost/outline/danger buttons for inline row actions
+   (header action rows on Supplier/PO detail pages). */
+[data-skin="soft"] .zeus-outline-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  background: var(--bg-surface);
+  color: var(--fg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  font: 500 12.5px var(--font-sans);
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+[data-skin="soft"] .zeus-outline-btn:hover:not(:disabled) {
+  background: var(--bg-sunken);
+  border-color: var(--border-strong);
+}
+[data-skin="soft"] .zeus-outline-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+[data-skin="soft"] .zeus-outline-btn.danger {
+  color: var(--rag-red-deep, var(--rag-red));
+  border-color: color-mix(in oklab, var(--rag-red) 30%, transparent);
+}
+[data-skin="soft"] .zeus-outline-btn.danger:hover:not(:disabled) {
+  background: var(--rag-red-soft);
+}
+
+/* Soft double-entry ledger table — used on JournalEntryDetail +
+   PurchaseOrderDetail's linked JE breakdown. Lives inside a
+   `.zeus-panel` so it inherits the rounded surface. */
+[data-skin="soft"] .zeus-ledger {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font: 500 13px var(--font-sans);
+  letter-spacing: -0.005em;
+}
+[data-skin="soft"] .zeus-ledger thead th {
+  font: 600 10.5px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  padding: 10px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-skin="soft"] .zeus-ledger thead th.num { text-align: right; }
+[data-skin="soft"] .zeus-ledger tbody td {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--fg-primary);
+  vertical-align: top;
+}
+[data-skin="soft"] .zeus-ledger tbody td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+[data-skin="soft"] .zeus-ledger tbody td.dim { color: var(--fg-tertiary); }
+[data-skin="soft"] .zeus-ledger tbody tr:last-child td { border-bottom: 0; }
+[data-skin="soft"] .zeus-ledger tfoot td {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-sunken);
+  font: 600 12.5px var(--font-sans);
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .zeus-ledger tfoot td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+[data-skin="soft"] .zeus-ledger .acct-code {
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  font-size: 11px;
+  color: var(--fg-tertiary);
+  margin-right: 6px;
+}
+
+/* Filter bar — the row of <select>s + action link at the top of list pages */
+[data-skin="soft"] .zeus-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+[data-skin="soft"] .zeus-filter-bar .zeus-select,
+[data-skin="soft"] .zeus-filter-bar .zeus-input {
+  width: auto;
+  min-width: 140px;
+  flex: 0 0 auto;
 }

@@ -2,7 +2,7 @@
  * /suppliers/new — create a new supplier directory entry.
  */
 
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/core/hooks/useAuth';
 import { createSupplier } from '../services/supplier.service';
 import { SupplierForm, type SupplierFormValues } from '../components/SupplierForm';
@@ -45,10 +45,17 @@ export default function SupplierCreatePage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <header>
-        <h1 className="text-xl font-semibold">New supplier</h1>
-        <p className="text-sm text-muted-foreground">
+    <div style={{ padding: 'var(--pad-page)', maxWidth: 820, margin: '0 auto' }} className="space-y-6">
+      <header className="zeus-page-head">
+        <Link to="/suppliers" className="zeus-back-link">
+          ← All suppliers
+        </Link>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1>New supplier</h1>
+          </div>
+        </div>
+        <p style={{ margin: 0, fontSize: 12.5, color: 'var(--fg-tertiary)' }}>
           Add an external supplier to the shared directory.
         </p>
       </header>

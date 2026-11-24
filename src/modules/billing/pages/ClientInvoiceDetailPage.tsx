@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   getClientInvoice,
   issueClientInvoice,
@@ -37,10 +37,10 @@ export function ClientInvoiceDetailPage() {
       .finally(() => setLoading(false));
   }
 
-  if (!invoiceId) return <div className="p-6">Missing invoice ID.</div>;
-  if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
-  if (error) return <div className="p-6 text-sm text-destructive">{error}</div>;
-  if (!invoice) return <div className="p-6">Invoice not found.</div>;
+  if (!invoiceId) return <div style={{ padding: 'var(--pad-page)', fontSize: 13 }}>Missing invoice ID.</div>;
+  if (loading) return <div style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading…</div>;
+  if (error) return <div style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--rag-red)' }}>{error}</div>;
+  if (!invoice) return <div style={{ padding: 'var(--pad-page)', fontSize: 13 }}>Invoice not found.</div>;
 
   const clientFacing = toClientFacingInvoice(invoice);
 
@@ -78,76 +78,98 @@ export function ClientInvoiceDetailPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-mono text-lg">{invoice.id}</h1>
-          <p className="text-sm text-muted-foreground">
-            Master job {invoice.masterJobId} · Client {invoice.clientId}
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-xs uppercase text-muted-foreground">
-            {CLIENT_INVOICE_STATUS_LABEL[invoice.status]}
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-6">
+      <header className="zeus-page-head">
+        <Link to="/billing/client-invoices" className="zeus-back-link">
+          ← All client invoices
+        </Link>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1 className="mono">{invoice.id}</h1>
+            <span className="zeus-state-pill">{CLIENT_INVOICE_STATUS_LABEL[invoice.status]}</span>
           </div>
-          <div className="font-mono text-lg">
-            {invoice.total.currency} {(invoice.total.amountMinor / 100).toLocaleString()}
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ font: '600 10.5px var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-tertiary)' }}>
+              Invoice total
+            </div>
+            <div className="mono tabular" style={{ font: '600 18px var(--font-sans)', color: 'var(--fg-primary)' }}>
+              {invoice.total.currency} {(invoice.total.amountMinor / 100).toLocaleString()}
+            </div>
           </div>
         </div>
+        <p style={{ margin: 0, fontSize: 12.5, color: 'var(--fg-tertiary)' }}>
+          Master job <span className="mono">{invoice.masterJobId}</span> · Client{' '}
+          <span className="mono">{invoice.clientId}</span>
+        </p>
       </header>
 
-      <div className="flex gap-2">
-        {invoice.status === 'DRAFT' && (
-          <button
-            onClick={onIssue}
-            disabled={actionInFlight === 'issue'}
-            className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
-          >
-            {actionInFlight === 'issue' ? 'Issuing…' : 'Issue Invoice'}
-          </button>
-        )}
-        {(invoice.status === 'ISSUED' || invoice.status === 'PART_PAID') && (
-          <button
-            onClick={onRecordPayment}
-            disabled={actionInFlight === 'payment'}
-            className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
-          >
-            {actionInFlight === 'payment' ? 'Recording…' : 'Record Payment'}
-          </button>
-        )}
-      </div>
+      {(invoice.status === 'DRAFT' ||
+        invoice.status === 'ISSUED' ||
+        invoice.status === 'PART_PAID') && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          {invoice.status === 'DRAFT' && (
+            <button
+              onClick={onIssue}
+              disabled={actionInFlight === 'issue'}
+              className="btn btn-primary"
+            >
+              {actionInFlight === 'issue' ? 'Issuing…' : 'Issue invoice'}
+            </button>
+          )}
+          {(invoice.status === 'ISSUED' || invoice.status === 'PART_PAID') && (
+            <button
+              onClick={onRecordPayment}
+              disabled={actionInFlight === 'payment'}
+              className="btn btn-primary"
+            >
+              {actionInFlight === 'payment' ? 'Recording…' : 'Record payment'}
+            </button>
+          )}
+        </div>
+      )}
 
-      <section>
-        <h2 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-          Internal view (AM / Finance)
-        </h2>
-        <table className="w-full table-fixed text-sm">
-          <thead className="text-left text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="w-1/2 py-1">Description</th>
-              <th className="py-1">Source subsidiary</th>
-              <th className="py-1 text-right">Cost (minor)</th>
-              <th className="py-1 text-right">Charge (minor)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.lines.map((line) => (
-              <tr key={line.id} className="border-t">
-                <td className="py-1">{line.description}</td>
-                <td className="py-1 font-mono text-xs">{line.sourceSubsidiaryId}</td>
-                <td className="py-1 text-right font-mono">{line.costMinor}</td>
-                <td className="py-1 text-right font-mono">{line.amountMinor}</td>
+      <section className="zeus-panel">
+        <div className="zeus-panel-head">
+          <h2>Internal view (AM / Finance)</h2>
+          <span className="zeus-panel-head-meta">{invoice.lines.length} line{invoice.lines.length === 1 ? '' : 's'}</span>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="zeus-ledger">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Source subsidiary</th>
+                <th className="num">Cost (minor)</th>
+                <th className="num">Charge (minor)</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {invoice.lines.map((line) => (
+                <tr key={line.id}>
+                  <td>{line.description}</td>
+                  <td className="dim" style={{ fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)', fontSize: 12 }}>
+                    {line.sourceSubsidiaryId}
+                  </td>
+                  <td className="num" style={{ fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)' }}>
+                    {line.costMinor}
+                  </td>
+                  <td className="num" style={{ fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)' }}>
+                    {line.amountMinor}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      <section>
-        <h2 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-          Client-facing preview
-        </h2>
-        <InvoicePDFPreview invoice={clientFacing} />
+      <section className="zeus-panel">
+        <div className="zeus-panel-head">
+          <h2>Client-facing preview</h2>
+        </div>
+        <div className="zeus-panel-pad">
+          <InvoicePDFPreview invoice={clientFacing} />
+        </div>
       </section>
     </div>
   );

@@ -119,32 +119,29 @@ export default function PurchaseOrderDetailPage() {
     }
   }
 
-  if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading purchase order…</p>;
-  if (error && !po) return <p className="p-6 text-sm text-destructive">Error: {error}</p>;
-  if (!po) return <p className="p-6 text-sm text-muted-foreground">Purchase order not found.</p>;
+  if (loading) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading purchase order…</p>;
+  if (error && !po) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--rag-red)' }}>Error: {error}</p>;
+  if (!po) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Purchase order not found.</p>;
 
   return (
-    <div className="space-y-6 p-6">
-      <header>
-        <Link
-          to="/procurement/purchase-orders"
-          className="text-xs text-muted-foreground hover:underline"
-        >
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-6">
+      <header className="zeus-page-head">
+        <Link to="/procurement/purchase-orders" className="zeus-back-link">
           ← All purchase orders
         </Link>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h1 className="font-mono text-xl font-semibold" data-testid="po-id">{po.id}</h1>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1 className="mono" data-testid="po-id">{po.id}</h1>
             <PurchaseOrderKindBadge kind={po.kind} />
             <PurchaseOrderStatusBadge status={po.status} />
           </div>
           {isManualVendor && (
-            <div className="flex gap-2">
+            <div className="zeus-page-head-actions">
               {!editing && (
                 <button
                   type="button"
                   onClick={() => { setDraft(po); setEditing(true); }}
-                  className="rounded border px-3 py-1.5 text-sm hover:bg-[var(--bg-sunken)]"
+                  className="zeus-outline-btn"
                   data-testid="po-edit-btn"
                 >
                   Edit
@@ -154,7 +151,7 @@ export default function PurchaseOrderDetailPage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="rounded border border-[var(--rag-red)] px-3 py-1.5 text-sm text-[var(--rag-red)] hover:bg-[var(--rag-red-soft)] disabled:opacity-50"
+                className="zeus-outline-btn danger"
                 data-testid="po-delete-btn"
               >
                 {deleting ? 'Deleting…' : 'Delete'}
@@ -164,219 +161,229 @@ export default function PurchaseOrderDetailPage() {
         </div>
       </header>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <div className="zeus-note danger">{error}</div>}
 
       {editing && isManualVendor && (
-        <section className="rounded border bg-[var(--bg-sunken)] p-4">
-          <h2 className="mb-3 text-sm font-semibold">Edit PO</h2>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Amount (major units)</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={((draft.amountMinor ?? po.amountMinor) / 100).toString()}
-                onChange={e => setDraft(d => ({ ...d, amountMinor: Math.round(parseFloat(e.target.value || '0') * 100) }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              />
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Currency</span>
-              <select
-                value={(draft.currency ?? po.currency) as string}
-                onChange={e => setDraft(d => ({ ...d, currency: e.target.value as CurrencyCode }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              >
-                {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Status</span>
-              <select
-                value={(draft.status ?? po.status) as string}
-                onChange={e => setDraft(d => ({ ...d, status: e.target.value as PurchaseOrderStatus }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              >
-                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Master Job ID</span>
-              <input
-                value={draft.masterJobId ?? ''}
-                onChange={e => setDraft(d => ({ ...d, masterJobId: e.target.value }))}
-                className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs"
-              />
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Supplier org id</span>
-              <input
-                value={draft.supplierOrgId ?? ''}
-                onChange={e => setDraft(d => ({ ...d, supplierOrgId: e.target.value }))}
-                className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs"
-              />
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Source invoice / ref</span>
-              <input
-                value={draft.sourceInvoiceId ?? ''}
-                onChange={e => setDraft(d => ({ ...d, sourceInvoiceId: e.target.value }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              />
-            </label>
-            <label className="col-span-2 block">
-              <span className="block text-xs text-muted-foreground">Notes</span>
-              <textarea
-                value={draft.notes ?? ''}
-                onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))}
-                rows={3}
-                className="mt-1 w-full rounded border px-2 py-1"
-              />
-            </label>
+        <section className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h2>Edit PO</h2>
           </div>
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              onClick={() => setEditing(false)}
-              className="rounded border px-3 py-1.5 text-sm hover:bg-card"
-            >
-              Cancel
-            </button>
+          <div className="zeus-panel-pad">
+            <div className="zeus-form-grid">
+              <label>
+                <span className="zeus-field-label">Amount (major units)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={((draft.amountMinor ?? po.amountMinor) / 100).toString()}
+                  onChange={e => setDraft(d => ({ ...d, amountMinor: Math.round(parseFloat(e.target.value || '0') * 100) }))}
+                  className="zeus-input"
+                />
+              </label>
+              <label>
+                <span className="zeus-field-label">Currency</span>
+                <select
+                  value={(draft.currency ?? po.currency) as string}
+                  onChange={e => setDraft(d => ({ ...d, currency: e.target.value as CurrencyCode }))}
+                  className="zeus-select"
+                >
+                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="zeus-field-label">Status</span>
+                <select
+                  value={(draft.status ?? po.status) as string}
+                  onChange={e => setDraft(d => ({ ...d, status: e.target.value as PurchaseOrderStatus }))}
+                  className="zeus-select"
+                >
+                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="zeus-field-label">Master Job ID</span>
+                <input
+                  value={draft.masterJobId ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, masterJobId: e.target.value }))}
+                  className="zeus-input"
+                />
+              </label>
+              <label>
+                <span className="zeus-field-label">Supplier org id</span>
+                <input
+                  value={draft.supplierOrgId ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, supplierOrgId: e.target.value }))}
+                  className="zeus-input"
+                />
+              </label>
+              <label>
+                <span className="zeus-field-label">Source invoice / ref</span>
+                <input
+                  value={draft.sourceInvoiceId ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, sourceInvoiceId: e.target.value }))}
+                  className="zeus-input"
+                />
+              </label>
+              <label className="full">
+                <span className="zeus-field-label">Notes</span>
+                <textarea
+                  value={draft.notes ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))}
+                  rows={3}
+                  className="zeus-textarea"
+                />
+              </label>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="btn btn-primary"
+              >
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="zeus-outline-btn"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </section>
       )}
 
-      <section className="rounded border bg-card p-4">
-        <h2 className="mb-3 text-sm font-medium">Procurement details</h2>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm md:grid-cols-3">
-          <div>
-            <dt className="text-xs text-muted-foreground">Amount</dt>
-            <dd className="font-medium" data-testid="po-amount">
-              {formatMoney(po.amountMinor, po.currency)}
-            </dd>
+      <section className="zeus-panel">
+        <div className="zeus-panel-head">
+          <h2>Procurement details</h2>
+        </div>
+        <div className="zeus-panel-pad">
+          <div className="zeus-def-grid">
+            <div className="zeus-def">
+              <span className="zeus-def-label">Amount</span>
+              <span className="zeus-def-value strong" data-testid="po-amount">
+                {formatMoney(po.amountMinor, po.currency)}
+              </span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Master Job</span>
+              <span className="zeus-def-value mono">{po.masterJobId}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">Source invoice</span>
+              <span className="zeus-def-value mono">{po.sourceInvoiceId}</span>
+            </div>
+            {po.supplierProfileId && (
+              <div className="zeus-def">
+                <span className="zeus-def-label">Talent profile</span>
+                <span className="zeus-def-value mono">{po.supplierProfileId}</span>
+              </div>
+            )}
+            {po.supplierOrgId && (
+              <div className="zeus-def">
+                <span className="zeus-def-label">Supplier</span>
+                <span className="zeus-def-value">
+                  {supplier ? (
+                    <Link
+                      to={`/suppliers/${supplier.id}`}
+                      className="hover:underline"
+                      data-testid="po-supplier-link"
+                      style={{ color: 'var(--fg-primary)' }}
+                    >
+                      {supplier.name}
+                    </Link>
+                  ) : (
+                    <span className="mono" style={{ color: 'var(--fg-tertiary)' }}>{po.supplierOrgId}</span>
+                  )}
+                </span>
+              </div>
+            )}
+            {po.mediaPlanId && (
+              <div className="zeus-def">
+                <span className="zeus-def-label">Media plan</span>
+                <span className="zeus-def-value mono">{po.mediaPlanId}</span>
+              </div>
+            )}
+            {po.vehicleType && (
+              <div className="zeus-def">
+                <span className="zeus-def-label">Vehicle type</span>
+                <span className="zeus-def-value">{po.vehicleType}</span>
+              </div>
+            )}
+            <div className="zeus-def">
+              <span className="zeus-def-label">Raised at</span>
+              <span className="zeus-def-value">{formatDate(po.raisedAt)}</span>
+            </div>
+            <div className="zeus-def">
+              <span className="zeus-def-label">GL posted</span>
+              <span className="zeus-def-value">{po.postedToGL ? 'Yes' : 'No'}</span>
+            </div>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Master Job</dt>
-            <dd className="font-mono text-xs">{po.masterJobId}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Source invoice</dt>
-            <dd className="font-mono text-xs">{po.sourceInvoiceId}</dd>
-          </div>
-          {po.supplierProfileId && (
-            <div>
-              <dt className="text-xs text-muted-foreground">Talent profile</dt>
-              <dd className="font-mono text-xs">{po.supplierProfileId}</dd>
+          {po.notes && (
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
+              <span className="zeus-def-label">Notes</span>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--fg-primary)', whiteSpace: 'pre-wrap' }}>{po.notes}</p>
             </div>
           )}
-          {po.supplierOrgId && (
-            <div>
-              <dt className="text-xs text-muted-foreground">Supplier</dt>
-              <dd className="text-xs">
-                {supplier ? (
-                  <Link
-                    to={`/suppliers/${supplier.id}`}
-                    className="hover:underline"
-                    data-testid="po-supplier-link"
-                  >
-                    {supplier.name}
-                  </Link>
-                ) : (
-                  <span className="font-mono text-muted-foreground">{po.supplierOrgId}</span>
-                )}
-              </dd>
-            </div>
-          )}
-          {po.mediaPlanId && (
-            <div>
-              <dt className="text-xs text-muted-foreground">Media plan</dt>
-              <dd className="font-mono text-xs">{po.mediaPlanId}</dd>
-            </div>
-          )}
-          {po.vehicleType && (
-            <div>
-              <dt className="text-xs text-muted-foreground">Vehicle type</dt>
-              <dd>{po.vehicleType}</dd>
-            </div>
-          )}
-          <div>
-            <dt className="text-xs text-muted-foreground">Raised at</dt>
-            <dd>{formatDate(po.raisedAt)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">GL posted</dt>
-            <dd>{po.postedToGL ? 'Yes' : 'No'}</dd>
-          </div>
-        </dl>
-        {po.notes && (
-          <div className="mt-3 border-t pt-3">
-            <dt className="text-xs text-muted-foreground mb-1">Notes</dt>
-            <dd className="text-sm whitespace-pre-wrap">{po.notes}</dd>
-          </div>
-        )}
+        </div>
       </section>
 
-      <section className="rounded border bg-card p-4" data-testid="po-je-section">
-        <h2 className="mb-3 text-sm font-medium">Linked journal entry</h2>
+      <section className="zeus-panel" data-testid="po-je-section">
+        <div className="zeus-panel-head">
+          <h2>Linked journal entry</h2>
+          {je && (
+            <span className="zeus-panel-head-meta">
+              Posted {formatDate(je.postedAt)}
+            </span>
+          )}
+        </div>
         {!je && (
-          <p className="text-sm text-muted-foreground">
+          <div className="zeus-panel-empty">
             No journal entry posted yet. The finance consumer posts a JE within seconds
             of the PO being raised.
-          </p>
+          </div>
         )}
         {je && (
           <>
-            <div className="mb-4 flex items-center justify-between text-sm">
+            <div className="zeus-panel-pad" style={{ paddingBottom: 6 }}>
               <Link
                 to={`/procurement/journal-entries/${je.id}`}
-                className="font-mono text-xs hover:underline"
+                className="mono hover:underline"
                 data-testid="je-link"
+                style={{ fontSize: 12, color: 'var(--fg-primary)' }}
               >
                 {je.id}
               </Link>
-              <span className="text-xs text-muted-foreground">
-                Posted {formatDate(je.postedAt)}
-              </span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+            <div style={{ overflowX: 'auto' }}>
+              <table className="zeus-ledger">
                 <thead>
-                  <tr className="text-left uppercase text-muted-foreground">
-                    <th className="py-1 font-medium">Account</th>
-                    <th className="py-1 text-right font-medium">Debit</th>
-                    <th className="py-1 text-right font-medium">Credit</th>
+                  <tr>
+                    <th>Account</th>
+                    <th className="num">Debit</th>
+                    <th className="num">Credit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {je.debits.map((line, i) => (
-                    <tr key={`debit-${i}`} className="border-t">
-                      <td className="py-1">
-                        <span className="font-mono text-[10px]">{line.accountCode}</span>{' '}
-                        <span className="text-muted-foreground">{line.accountName}</span>
+                    <tr key={`debit-${i}`}>
+                      <td>
+                        <span className="acct-code">{line.accountCode}</span>
+                        <span className="dim">{line.accountName}</span>
                       </td>
-                      <td className="py-1 text-right font-medium">
-                        {formatMoney(line.amountMinor, je.currency)}
-                      </td>
-                      <td className="py-1 text-right text-muted-foreground">—</td>
+                      <td className="num">{formatMoney(line.amountMinor, je.currency)}</td>
+                      <td className="num dim">—</td>
                     </tr>
                   ))}
                   {je.credits.map((line, i) => (
-                    <tr key={`credit-${i}`} className="border-t">
-                      <td className="py-1">
-                        <span className="font-mono text-[10px]">{line.accountCode}</span>{' '}
-                        <span className="text-muted-foreground">{line.accountName}</span>
+                    <tr key={`credit-${i}`}>
+                      <td>
+                        <span className="acct-code">{line.accountCode}</span>
+                        <span className="dim">{line.accountName}</span>
                       </td>
-                      <td className="py-1 text-right text-muted-foreground">—</td>
-                      <td className="py-1 text-right font-medium">
-                        {formatMoney(line.amountMinor, je.currency)}
-                      </td>
+                      <td className="num dim">—</td>
+                      <td className="num">{formatMoney(line.amountMinor, je.currency)}</td>
                     </tr>
                   ))}
                 </tbody>

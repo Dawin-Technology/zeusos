@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getSupplier, updateSupplier } from '../services/supplier.service';
 import type { Supplier } from '../types/supplier.types';
 import { SupplierForm, type SupplierFormValues } from '../components/SupplierForm';
@@ -56,15 +56,22 @@ export default function SupplierEditPage() {
     navigate(`/suppliers/${supplierId}`);
   }
 
-  if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading supplier…</p>;
-  if (error) return <p className="p-6 text-sm text-destructive">Error: {error}</p>;
-  if (!supplier) return <p className="p-6 text-sm text-muted-foreground">Supplier not found.</p>;
+  if (loading) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading supplier…</p>;
+  if (error) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--rag-red)' }}>Error: {error}</p>;
+  if (!supplier) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Supplier not found.</p>;
 
   return (
-    <div className="space-y-6 p-6">
-      <header>
-        <h1 className="text-xl font-semibold">Edit supplier</h1>
-        <p className="text-sm text-muted-foreground">
+    <div style={{ padding: 'var(--pad-page)', maxWidth: 820, margin: '0 auto' }} className="space-y-6">
+      <header className="zeus-page-head">
+        <Link to={`/suppliers/${supplier.id}`} className="zeus-back-link">
+          ← Back to supplier
+        </Link>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1>Edit supplier</h1>
+          </div>
+        </div>
+        <p style={{ margin: 0, fontSize: 12.5, color: 'var(--fg-tertiary)' }}>
           Update profile details. Status changes (activate/deactivate/blacklist) live on the detail page.
         </p>
       </header>
