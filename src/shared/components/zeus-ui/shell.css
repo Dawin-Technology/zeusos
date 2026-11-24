@@ -1162,3 +1162,252 @@
   background: var(--bg-sunken);
   border-color: var(--border-default);
 }
+
+/* ============================================================
+   Soft-skin Finance tabs — PR 5
+   The Finance module keeps its section-colored (RAG-green) pills
+   as its own accent while the module-tab rail above still uses
+   the Zeus red/navy accent from `.zeus-tabs`. The pills sit above
+   each sub-page and reuse the shell's soft tokens.
+   ============================================================ */
+[data-skin="soft"] .zeus-subpills {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 2px 2px 6px;
+  margin: 0 -2px;
+  scrollbar-width: none;
+}
+[data-skin="soft"] .zeus-subpills::-webkit-scrollbar { display: none; }
+[data-skin="soft"] .zeus-subpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--fg-secondary);
+  font: 500 12.5px var(--font-sans);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+[data-skin="soft"] .zeus-subpill:hover {
+  background: var(--bg-sunken);
+  color: var(--fg-primary);
+}
+[data-skin="soft"] .zeus-subpill.active {
+  background: var(--rag-green-soft);
+  color: var(--rag-green-deep, var(--rag-green));
+  border-color: color-mix(in oklab, var(--rag-green) 36%, transparent);
+  font-weight: 600;
+}
+[data-skin="soft"] .zeus-subpill:focus-visible {
+  outline: 2px solid var(--rag-green);
+  outline-offset: 2px;
+}
+
+/* Finance settings vertical list — rows inside a .zeus-panel */
+[data-skin="soft"] .zeus-finance-settings-list { margin: 0; padding: 0; }
+[data-skin="soft"] .zeus-finance-settings-row {
+  grid-template-columns: 48px 1fr auto;
+  padding: 0;
+}
+[data-skin="soft"] .zeus-finance-settings-btn {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 18px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+[data-skin="soft"] .zeus-finance-settings-btn:hover {
+  background: var(--bg-sunken);
+}
+[data-skin="soft"] .zeus-finance-settings-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--rag-green-soft);
+  color: var(--rag-green-deep, var(--rag-green));
+  flex-shrink: 0;
+}
+
+/* Analysis landing nav-card — soft click target with icon + title */
+[data-skin="soft"] .zeus-finance-nav-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  [data-skin="soft"] .zeus-finance-nav-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  [data-skin="soft"] .zeus-finance-nav-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+[data-skin="soft"] .zeus-finance-nav-card {
+  display: block;
+  padding: 18px;
+  text-align: left;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+[data-skin="soft"] .zeus-finance-nav-card:hover {
+  border-color: color-mix(in oklab, var(--rag-green) 36%, var(--border-subtle));
+  box-shadow: var(--shadow-md);
+}
+[data-skin="soft"] .zeus-finance-nav-card:focus-visible {
+  outline: 2px solid var(--rag-green);
+  outline-offset: 2px;
+}
+[data-skin="soft"] .zeus-finance-nav-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--rag-green-soft);
+  color: var(--rag-green-deep, var(--rag-green));
+  flex-shrink: 0;
+  transition: background 160ms ease;
+}
+[data-skin="soft"] .zeus-finance-nav-card:hover .zeus-finance-nav-icon {
+  background: color-mix(in oklab, var(--rag-green) 18%, var(--rag-green-soft));
+}
+[data-skin="soft"] .zeus-finance-nav-title {
+  font: 600 13.5px var(--font-sans);
+  letter-spacing: -0.005em;
+  color: var(--fg-primary);
+  margin: 0;
+}
+[data-skin="soft"] .zeus-finance-nav-card:hover .zeus-finance-nav-title {
+  color: var(--rag-green-deep, var(--rag-green));
+}
+
+/* Finance CTA — the amber "Run Optimizer" and similar primary action pills.
+   Keeps the amber tone (owned by Cash & Forecast) but drops the previous
+   hover=same-amber flash for a slightly deeper tone. */
+[data-skin="soft"] .zeus-finance-cta {
+  background: var(--rag-amber);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-sm);
+}
+[data-skin="soft"] .zeus-finance-cta:hover {
+  background: color-mix(in oklab, var(--rag-amber) 80%, #000);
+  color: #fff;
+}
+[data-skin="soft"] .zeus-finance-cta:disabled { opacity: 0.6; }
+
+/* Cross-module link — a dot + label in the "Connected Modules" and
+   "Cash Data Sources" panels. Soft hover tint; no ring. */
+[data-skin="soft"] .zeus-finance-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  background: transparent;
+  border: 0;
+  color: var(--fg-secondary);
+  font: 500 13px var(--font-sans);
+  letter-spacing: -0.005em;
+  text-align: left;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+[data-skin="soft"] .zeus-finance-link:hover { color: var(--fg-primary); }
+[data-skin="soft"] .zeus-finance-link-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* Finance alert — the critical / error alert strips on CashForecast.
+   Keeps the red tone but softens the border and uses the shell panel radius. */
+[data-skin="soft"] .zeus-finance-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--rag-red-soft);
+  color: var(--rag-red-deep, var(--rag-red));
+  border: 1px solid color-mix(in oklab, var(--rag-red) 24%, transparent);
+  border-radius: 14px;
+  font-size: 13px;
+}
+[data-skin="soft"] .zeus-finance-alert-strong {
+  padding: 14px 16px;
+  gap: 12px;
+}
+[data-skin="soft"] .zeus-finance-alert-red { /* tone marker — kept for future tones */ }
+
+/* Quick-access tile — 4-up grid of soft chips on the Overview page.
+   The link.color is passed in via `--quick-color` so the icon chip
+   picks up the module's accent without an inline background string. */
+[data-skin="soft"] .zeus-finance-quick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 180ms ease;
+}
+[data-skin="soft"] .zeus-finance-quick:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+[data-skin="soft"] .zeus-finance-quick-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: color-mix(in oklab, var(--quick-color, var(--accent)) 14%, var(--bg-surface));
+}
+[data-skin="soft"] .zeus-finance-quick-label {
+  font-size: 13px;
+  color: var(--fg-secondary);
+  letter-spacing: -0.005em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-skin="soft"] .zeus-finance-quick:hover .zeus-finance-quick-label {
+  color: var(--fg-primary);
+}
+
+/* Dark-theme tweaks — Finance surfaces */
+[data-skin="soft"][data-theme="dark"] .zeus-finance-nav-card,
+[data-skin="soft"][data-theme="dark"] .zeus-finance-quick {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+[data-skin="soft"][data-theme="dark"] .zeus-subpill {
+  background: var(--bg-surface);
+}
+[data-skin="soft"][data-theme="dark"] .zeus-subpill.active {
+  background: color-mix(in oklab, var(--rag-green) 18%, var(--bg-surface));
+}
