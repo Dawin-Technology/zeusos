@@ -38,8 +38,8 @@ export default function MediaPlansListPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as MediaPlanStatus | 'ALL')}
-              className="input"
-              style={{ width: 'auto' }}
+              className="zeus-select"
+              style={{ width: 'auto', minWidth: 160 }}
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>{s === 'ALL' ? 'All statuses' : s}</option>
@@ -53,30 +53,36 @@ export default function MediaPlansListPage() {
       />
 
       {loading && <p style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading media plans…</p>}
-      {error && <p style={{ fontSize: 13, color: 'var(--rag-red)' }}>Error: {error}</p>}
+      {error && <div className="zeus-note danger">Error: {error}</div>}
 
       {!loading && !error && plans.length === 0 && (
-        <div className="card card-pad" style={{ borderStyle: 'dashed', textAlign: 'center', color: 'var(--fg-tertiary)', fontSize: 13 }}>
+        <div className="zeus-panel zeus-panel-empty">
           No media plans found. Create a plan to start buying media for a campaign.
         </div>
       )}
 
       {!loading && plans.length > 0 && (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          {plans.map((plan) => (
-            <div key={plan.id} className="list-row" style={{ justifyContent: 'space-between' }}>
-              <div>
-                <Link to={`/media/${plan.id}`} className="ttl hover:underline">
-                  {plan.title}
-                </Link>
-                <div className="meta">
-                  Job: {plan.masterJobId} <span className="sep">·</span> {plan.currency}{' '}
-                  {(plan.totalBudgetMinor / 100).toLocaleString()} total budget
+        <div className="zeus-panel">
+          <ul className="zeus-row-list">
+            {plans.map((plan) => (
+              <li
+                key={plan.id}
+                className="zeus-row"
+                style={{ gridTemplateColumns: '1fr auto' }}
+              >
+                <div>
+                  <Link to={`/media/${plan.id}`} className="zeus-row-link">
+                    {plan.title}
+                  </Link>
+                  <div className="zeus-row-sub">
+                    Job: {plan.masterJobId} · {plan.currency}{' '}
+                    {(plan.totalBudgetMinor / 100).toLocaleString()} total budget
+                  </div>
                 </div>
-              </div>
-              <MediaPlanStatusBadge status={plan.status} />
-            </div>
-          ))}
+                <MediaPlanStatusBadge status={plan.status} />
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

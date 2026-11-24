@@ -14,13 +14,12 @@ import { Button } from '@/core/components/ui/button';
 import type { RoleProfile } from '@/modules/hr-central/role-profiles/types';
 import { subscribeRoleProfiles } from '../services/role-profile.service';
 import { RoleProfileForm } from '../components/RoleProfileForm';
-import { cn } from '@/shared/lib/utils';
 import { PageHero } from '@/shared/components/refresh';
 
-const STATUS_TONE: Record<RoleProfile['status'], string> = {
-  draft:    'bg-[var(--bg-sunken)] text-[var(--fg-secondary)]',
-  active:   'bg-[var(--rag-green-soft)] text-[var(--rag-green-deep)]',
-  archived: 'bg-[var(--bg-sunken)] text-[var(--fg-tertiary)] opacity-60',
+const STATUS_TONE: Record<RoleProfile['status'], 'green' | 'amber' | 'red' | ''> = {
+  draft: '',
+  active: 'green',
+  archived: '',
 };
 
 export default function RoleProfilesListPage() {
@@ -62,29 +61,31 @@ export default function RoleProfilesListPage() {
       />
 
       {err && (
-        <div role="alert" data-testid="role-profiles-error" className="p-3 rounded-md border border-[var(--rag-red)] bg-[var(--rag-red-soft)] text-[var(--rag-red-deep)] text-[13px]">
+        <div role="alert" data-testid="role-profiles-error" className="zeus-note danger">
           {err}
         </div>
       )}
 
       {showCreate && (
-        <div data-testid="role-profile-create" className="rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
-          <header className="flex items-center justify-between mb-3">
-            <h2 className="text-[14px] font-semibold text-[var(--fg-primary)]">New role profile</h2>
+        <section className="zeus-panel" data-testid="role-profile-create">
+          <div className="zeus-panel-head">
+            <h2>New role profile</h2>
             <Button size="sm" variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-          </header>
-          <RoleProfileForm onSaved={() => setShowCreate(false)} />
-        </div>
+          </div>
+          <div className="zeus-panel-pad">
+            <RoleProfileForm onSaved={() => setShowCreate(false)} />
+          </div>
+        </section>
       )}
 
-      <div className="flex items-end gap-3 flex-wrap">
+      <div className="zeus-filter-bar">
         <label className="block">
-          <span className="block text-[11px] font-medium uppercase tracking-wide text-[var(--fg-tertiary)] mb-1">Brand</span>
+          <span className="zeus-field-label">Brand</span>
           <select
             data-testid="rp-brand-filter"
             value={brandFilter}
             onChange={(e) => setBrandFilter(e.target.value)}
-            className="h-8 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px]"
+            className="zeus-select"
           >
             <option value="">All brands</option>
             <option value="zeus-the-agency">Zeus The Agency</option>
@@ -96,12 +97,12 @@ export default function RoleProfilesListPage() {
           </select>
         </label>
         <label className="block">
-          <span className="block text-[11px] font-medium uppercase tracking-wide text-[var(--fg-tertiary)] mb-1">Status</span>
+          <span className="zeus-field-label">Status</span>
           <select
             data-testid="rp-status-filter"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-8 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px]"
+            className="zeus-select"
           >
             <option value="">All statuses</option>
             <option value="draft">Draft</option>
@@ -112,40 +113,62 @@ export default function RoleProfilesListPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <p
+        <div
           data-testid="role-profiles-empty"
-          className="text-[13px] text-[var(--fg-tertiary)] italic p-4 rounded-md border border-dashed border-[var(--border-default)] text-center"
+          className="zeus-panel zeus-panel-empty"
         >
           {rows.length === 0
             ? 'No role profiles yet. Create the first one to start declaring capabilities + assignments.'
             : 'No role profiles match the current filters.'}
-        </p>
+        </div>
       ) : (
-        <ul className="space-y-1.5">
-          {filtered.map((r) => (
-            <li key={r.id}>
-              <Link
-                to={`/hr/role-profiles/${encodeURIComponent(r.id)}`}
-                data-testid={`role-profile-row-${r.id}`}
-                className="flex items-center gap-3 p-2.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] hover:bg-[var(--bg-sunken)] transition-colors"
-              >
-                <Briefcase className="h-3.5 w-3.5 text-[var(--fg-tertiary)] flex-shrink-0" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-medium text-[var(--fg-primary)] truncate">{r.title}</p>
-                  <p className="text-[11.5px] text-[var(--fg-tertiary)] truncate">
-                    {r.brandId} · {r.departmentId} · {r.jobLevel}
-                  </p>
-                </div>
-                <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded', STATUS_TONE[r.status])}>
-                  {r.status}
-                </span>
-                <code className="font-mono text-[10.5px] text-[var(--fg-tertiary)] hidden md:inline">
-                  {r.id}
-                </code>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="zeus-panel">
+          <ul className="zeus-row-list">
+            {filtered.map((r) => {
+              const tone = STATUS_TONE[r.status];
+              return (
+                <li key={r.id} className="zeus-row" style={{ gridTemplateColumns: '28px 1fr auto auto', padding: 0 }}>
+                  <Link
+                    to={`/hr/role-profiles/${encodeURIComponent(r.id)}`}
+                    data-testid={`role-profile-row-${r.id}`}
+                    style={{
+                      display: 'contents',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                    }}
+                  >
+                    <span style={{ padding: '12px 0 12px 18px', display: 'inline-flex', alignItems: 'center' }}>
+                      <Briefcase className="h-3.5 w-3.5" style={{ color: 'var(--fg-tertiary)' }} aria-hidden="true" />
+                    </span>
+                    <span style={{ padding: '12px 0', minWidth: 0 }}>
+                      <span style={{ display: 'block', fontWeight: 600, color: 'var(--fg-primary)', fontSize: 13 }}>
+                        {r.title}
+                      </span>
+                      <span className="zeus-row-sub" style={{ marginTop: 2 }}>
+                        {r.brandId} · {r.departmentId} · {r.jobLevel}
+                      </span>
+                    </span>
+                    <span style={{ padding: '12px 10px', display: 'inline-flex', alignItems: 'center' }}>
+                      <span className={`zeus-state-pill ${tone}`}>{r.status}</span>
+                    </span>
+                    <code
+                      style={{
+                        padding: '12px 18px 12px 0',
+                        fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)',
+                        fontSize: 10.5,
+                        color: 'var(--fg-tertiary)',
+                        whiteSpace: 'nowrap',
+                      }}
+                      className="hidden md:inline"
+                    >
+                      {r.id}
+                    </code>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </div>
   );

@@ -100,152 +100,170 @@ export default function MediaPlanDetailPage() {
     }
   }
 
-  if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>;
-  if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>;
-  if (!plan)   return <p className="p-6 text-sm text-muted-foreground">Plan not found.</p>;
+  if (loading) return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Loading…</p>;
+  if (error && !plan) return <div style={{ padding: 'var(--pad-page)' }}><div className="zeus-note danger">Error: {error}</div></div>;
+  if (!plan)   return <p style={{ padding: 'var(--pad-page)', fontSize: 13, color: 'var(--fg-tertiary)' }}>Plan not found.</p>;
 
   return (
-    <div className="space-y-6 p-6">
-      <nav className="text-sm text-muted-foreground">
-        <Link to="/media" className="hover:underline">Media Plans</Link> › {plan.title}
-      </nav>
-
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold">{plan.title}</h1>
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-5">
+      <div className="zeus-page-head">
+        <Link to="/media" className="zeus-back-link">← Media Plans</Link>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1>{plan.title}</h1>
             <MediaPlanStatusBadge status={plan.status} />
           </div>
-          <p className="text-sm text-muted-foreground">
-            Job: {plan.masterJobId} · Currency: {plan.currency} ·
-            Total budget: {plan.currency} {(plan.totalBudgetMinor / 100).toLocaleString()}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            to={`/media/${planId}/actuals`}
-            className="rounded border px-3 py-1.5 text-sm"
-          >
-            Post Actuals
-          </Link>
-          {!editingPlan && (
+          <div className="zeus-page-head-actions">
+            <Link to={`/media/${planId}/actuals`} className="zeus-outline-btn">
+              Post Actuals
+            </Link>
+            {!editingPlan && (
+              <button
+                type="button"
+                onClick={() => { setDraft(plan); setEditingPlan(true); }}
+                className="zeus-outline-btn"
+                data-testid="media-plan-edit-btn"
+              >
+                Edit Plan
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => { setDraft(plan); setEditingPlan(true); }}
-              className="rounded border px-3 py-1.5 text-sm hover:bg-[var(--bg-sunken)]"
-              data-testid="media-plan-edit-btn"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="zeus-outline-btn danger"
+              data-testid="media-plan-delete-btn"
             >
-              Edit Plan
+              {deleting ? 'Deleting…' : 'Delete'}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={deleting}
-            className="rounded border border-[var(--rag-red)] px-3 py-1.5 text-sm text-[var(--rag-red)] hover:bg-[var(--rag-red-soft)] disabled:opacity-50"
-            data-testid="media-plan-delete-btn"
-          >
-            {deleting ? 'Deleting…' : 'Delete'}
-          </button>
-          <button
-            onClick={() => { setEditingBuy(undefined); setShowForm(true); }}
-            className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
-          >
-            Add Buy
-          </button>
+            <button
+              onClick={() => { setEditingBuy(undefined); setShowForm(true); }}
+              className="btn btn-primary"
+            >
+              Add Buy
+            </button>
+          </div>
         </div>
-      </header>
+        <dl className="zeus-def-grid">
+          <div className="zeus-def">
+            <dt className="zeus-def-label">Master Job</dt>
+            <dd className="zeus-def-value mono">{plan.masterJobId}</dd>
+          </div>
+          <div className="zeus-def">
+            <dt className="zeus-def-label">Currency</dt>
+            <dd className="zeus-def-value strong">{plan.currency}</dd>
+          </div>
+          <div className="zeus-def">
+            <dt className="zeus-def-label">Total Budget</dt>
+            <dd className="zeus-def-value strong">
+              {plan.currency} {(plan.totalBudgetMinor / 100).toLocaleString()}
+            </dd>
+          </div>
+          {(plan.flightStartDate || plan.flightEndDate) && (
+            <div className="zeus-def">
+              <dt className="zeus-def-label">Flight</dt>
+              <dd className="zeus-def-value">
+                {plan.flightStartDate ?? '—'} → {plan.flightEndDate ?? '—'}
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
 
       {editingPlan && (
-        <section className="rounded border bg-[var(--bg-sunken)] p-4">
-          <h2 className="mb-3 text-sm font-semibold">Edit plan</h2>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <label className="col-span-2 block">
-              <span className="block text-xs text-muted-foreground">Title</span>
-              <input
-                value={draft.title ?? ''}
-                onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              />
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Status</span>
-              <select
-                value={(draft.status ?? plan.status) as string}
-                onChange={e => setDraft(d => ({ ...d, status: e.target.value as MediaPlanStatus }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              >
-                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Currency</span>
-              <select
-                value={(draft.currency ?? plan.currency) as string}
-                onChange={e => setDraft(d => ({ ...d, currency: e.target.value as CurrencyCode }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              >
-                {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </label>
-            <label className="col-span-2 block">
-              <span className="block text-xs text-muted-foreground">Total budget (major units)</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={((draft.totalBudgetMinor ?? plan.totalBudgetMinor) / 100).toString()}
-                onChange={e => setDraft(d => ({ ...d, totalBudgetMinor: Math.round(parseFloat(e.target.value || '0') * 100) }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              />
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Flight start</span>
-              <input
-                type="date"
-                value={draft.flightStartDate ?? plan.flightStartDate ?? ''}
-                onChange={e => setDraft(d => ({ ...d, flightStartDate: e.target.value }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              />
-            </label>
-            <label className="block">
-              <span className="block text-xs text-muted-foreground">Flight end</span>
-              <input
-                type="date"
-                value={draft.flightEndDate ?? plan.flightEndDate ?? ''}
-                onChange={e => setDraft(d => ({ ...d, flightEndDate: e.target.value }))}
-                className="mt-1 w-full rounded border px-2 py-1"
-              />
-            </label>
-            <label className="col-span-2 block">
-              <span className="block text-xs text-muted-foreground">Notes</span>
-              <textarea
-                value={draft.notes ?? plan.notes ?? ''}
-                onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))}
-                rows={3}
-                className="mt-1 w-full rounded border px-2 py-1"
-              />
-            </label>
+        <section className="zeus-panel">
+          <div className="zeus-panel-head">
+            <h3>Edit plan</h3>
           </div>
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={handleSavePlan}
-              disabled={savingPlan}
-              className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
-            >
-              {savingPlan ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              onClick={() => setEditingPlan(false)}
-              className="rounded border px-3 py-1.5 text-sm hover:bg-card"
-            >
-              Cancel
-            </button>
+          <div className="zeus-panel-pad">
+            <div className="zeus-form-grid">
+              <label className="full">
+                <span className="zeus-field-label">Title</span>
+                <input
+                  value={draft.title ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
+                  className="zeus-input"
+                />
+              </label>
+              <label>
+                <span className="zeus-field-label">Status</span>
+                <select
+                  value={(draft.status ?? plan.status) as string}
+                  onChange={e => setDraft(d => ({ ...d, status: e.target.value as MediaPlanStatus }))}
+                  className="zeus-select"
+                >
+                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="zeus-field-label">Currency</span>
+                <select
+                  value={(draft.currency ?? plan.currency) as string}
+                  onChange={e => setDraft(d => ({ ...d, currency: e.target.value as CurrencyCode }))}
+                  className="zeus-select"
+                >
+                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+              <label className="full">
+                <span className="zeus-field-label">Total budget (major units)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={((draft.totalBudgetMinor ?? plan.totalBudgetMinor) / 100).toString()}
+                  onChange={e => setDraft(d => ({ ...d, totalBudgetMinor: Math.round(parseFloat(e.target.value || '0') * 100) }))}
+                  className="zeus-input"
+                />
+              </label>
+              <label>
+                <span className="zeus-field-label">Flight start</span>
+                <input
+                  type="date"
+                  value={draft.flightStartDate ?? plan.flightStartDate ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, flightStartDate: e.target.value }))}
+                  className="zeus-input"
+                />
+              </label>
+              <label>
+                <span className="zeus-field-label">Flight end</span>
+                <input
+                  type="date"
+                  value={draft.flightEndDate ?? plan.flightEndDate ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, flightEndDate: e.target.value }))}
+                  className="zeus-input"
+                />
+              </label>
+              <label className="full">
+                <span className="zeus-field-label">Notes</span>
+                <textarea
+                  value={draft.notes ?? plan.notes ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))}
+                  rows={3}
+                  className="zeus-textarea"
+                />
+              </label>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={handleSavePlan}
+                disabled={savingPlan}
+                className="btn btn-primary"
+              >
+                {savingPlan ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                onClick={() => setEditingPlan(false)}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </section>
       )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && plan && <div className="zeus-note danger">{error}</div>}
 
       <MediaBuyGrid
         buys={buys}

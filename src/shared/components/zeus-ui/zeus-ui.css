@@ -8,6 +8,9 @@
 
 @import "./shell.css";
 @import "./kanban/KanbanLayout.css";
+@import "./calendar/CalendarLayout.css";
+@import "./org-chart/OrgChartLayout.css";
+@import "./gallery/GalleryLayout.css";
 
 /* ---- Card ---- */
 .zui-card {

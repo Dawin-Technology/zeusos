@@ -13,6 +13,13 @@ import {
   subscribeRoleAssignments,
   subscribeRoleProfiles,
 } from '../services/role-profile.service';
+import { PageHero } from '@/shared/components/refresh';
+
+const ASSIGNMENT_TONE: Record<RoleAssignment['status'], 'green' | 'amber' | ''> = {
+  active: 'green',
+  paused: 'amber',
+  ended: '',
+};
 
 export default function RoleAssignmentsListPage() {
   const [profiles, setProfiles] = useState<RoleProfile[]>([]);
@@ -53,86 +60,100 @@ export default function RoleAssignmentsListPage() {
   }, [visible, profilesById]);
 
   return (
-    <div className="p-6 space-y-4" data-testid="role-assignments-list-page">
-      <header>
-        <h1 className="text-[20px] font-semibold text-[var(--fg-primary)] mb-1">Role Assignments</h1>
-        <p className="text-[12.5px] text-[var(--fg-tertiary)]">
-          Effective-dated EmployeeId × RoleProfileId edges consumed by the EmployeeAssignmentService.
-        </p>
-      </header>
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-4" data-testid="role-assignments-list-page">
+      <PageHero
+        eyebrow="Operations · HR Central"
+        title="Role assignments"
+        body="Effective-dated EmployeeId × RoleProfileId edges consumed by the EmployeeAssignmentService."
+      />
 
       {err && (
-        <div role="alert" data-testid="ra-list-error" className="p-3 rounded-md border border-[var(--rag-red)] bg-[var(--rag-red-soft)] text-[var(--rag-red-deep)] text-[13px]">
+        <div role="alert" data-testid="ra-list-error" className="zeus-note danger">
           {err}
         </div>
       )}
 
-      <label className="block">
-        <span className="block text-[11px] font-medium uppercase tracking-wide text-[var(--fg-tertiary)] mb-1">Status</span>
-        <select
-          data-testid="ra-status-filter"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-8 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-surface)] text-[13px]"
-        >
-          <option value="">All</option>
-          <option value="active">Active</option>
-          <option value="ended">Ended</option>
-          <option value="paused">Paused</option>
-        </select>
-      </label>
+      <div className="zeus-filter-bar">
+        <label className="block">
+          <span className="zeus-field-label">Status</span>
+          <select
+            data-testid="ra-status-filter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="zeus-select"
+          >
+            <option value="">All</option>
+            <option value="active">Active</option>
+            <option value="ended">Ended</option>
+            <option value="paused">Paused</option>
+          </select>
+        </label>
+      </div>
 
       {grouped.length === 0 ? (
-        <p
+        <div
           data-testid="ra-list-empty"
-          className="text-[13px] text-[var(--fg-tertiary)] italic p-4 rounded-md border border-dashed border-[var(--border-default)] text-center"
+          className="zeus-panel zeus-panel-empty"
         >
           No assignments match the current filter.
-        </p>
+        </div>
       ) : (
-        <ul className="space-y-3">
+        <div className="space-y-3">
           {grouped.map(([roleProfileId, rows]) => {
             const profile = profilesById[roleProfileId];
             return (
-              <li
+              <section
                 key={roleProfileId}
                 data-testid={`ra-group-${roleProfileId}`}
-                className="rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] p-3"
+                className="zeus-panel"
               >
-                <header className="flex items-baseline justify-between gap-3 mb-2">
+                <header className="zeus-panel-head">
                   <Link
                     to={`/hr/role-profiles/${encodeURIComponent(roleProfileId)}`}
-                    className="text-[13.5px] font-semibold text-[var(--fg-primary)] hover:underline"
+                    style={{ textDecoration: 'none' }}
                   >
-                    {profile?.title ?? roleProfileId}
+                    <h3>{profile?.title ?? roleProfileId}</h3>
                   </Link>
-                  <span className="text-[11.5px] text-[var(--fg-tertiary)]">
+                  <span className="zeus-panel-head-meta">
                     {profile?.brandId ?? '—'} · {rows.length}
                   </span>
                 </header>
-                <ul className="space-y-1">
-                  {rows.map((a) => (
-                    <li
-                      key={a.id}
-                      data-testid={`ra-row-${a.id}`}
-                      className="flex items-center gap-3 text-[12px]"
-                    >
-                      <code className="font-mono text-[var(--fg-primary)]">{a.employeeId}</code>
-                      {a.isPrimary && (
-                        <span className="text-[10px] uppercase tracking-wide font-semibold text-[var(--accent)] bg-[var(--accent-soft)] px-1.5 py-0.5 rounded">
-                          primary
+                <ul className="zeus-row-list">
+                  {rows.map((a) => {
+                    const tone = ASSIGNMENT_TONE[a.status];
+                    return (
+                      <li
+                        key={a.id}
+                        data-testid={`ra-row-${a.id}`}
+                        className="zeus-row"
+                        style={{ gridTemplateColumns: 'auto auto 1fr auto', fontSize: 12 }}
+                      >
+                        <code
+                          style={{
+                            fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)',
+                            color: 'var(--fg-primary)',
+                          }}
+                        >
+                          {a.employeeId}
+                        </code>
+                        {a.isPrimary ? (
+                          <span className="zeus-state-pill accent">primary</span>
+                        ) : (
+                          <span />
+                        )}
+                        <span />
+                        <span className="zeus-row-sub" style={{ margin: 0 }}>
+                          <span className={`zeus-state-pill ${tone}`} style={{ marginRight: 8 }}>{a.status}</span>
+                          {typeof a.effectiveFrom === 'string' ? (a.effectiveFrom as string).slice(0, 10) : '—'}
                         </span>
-                      )}
-                      <span className="ml-auto text-[11px] text-[var(--fg-tertiary)]">
-                        {a.status} · {typeof a.effectiveFrom === 'string' ? (a.effectiveFrom as string).slice(0, 10) : '—'}
-                      </span>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
-              </li>
+              </section>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );

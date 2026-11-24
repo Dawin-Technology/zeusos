@@ -63,52 +63,60 @@ export default function MediaPlanCreatePage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-6">
-      <Link to="/media" className="text-xs text-muted-foreground">← Media Plans</Link>
-      <h1 className="text-xl font-semibold">New media plan</h1>
+    <div style={{ padding: 'var(--pad-page)' }} className="space-y-4 mx-auto max-w-2xl">
+      <div className="zeus-page-head">
+        <Link to="/media" className="zeus-back-link">← Media Plans</Link>
+        <div className="zeus-page-head-row">
+          <div className="zeus-page-head-title">
+            <h1>New media plan</h1>
+          </div>
+        </div>
+      </div>
 
-      {error && <p className="rounded border border-[var(--rag-red)] bg-[var(--rag-red-soft)] px-3 py-2 text-sm text-[var(--rag-red)]">{error}</p>}
+      {error && <div className="zeus-note danger">{error}</div>}
 
-      <div className="grid grid-cols-2 gap-3 text-sm">
-        <label className="col-span-2 block">
-          <span className="block text-xs text-muted-foreground">Title *</span>
+      <div className="zeus-form-grid">
+        <label className="full">
+          <span className="zeus-field-label">Title *</span>
           <input
             value={title}
             onChange={e => setTitle(e.target.value)}
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="zeus-input"
             placeholder="e.g. Q3 2026 OOH + Digital"
             autoFocus
             data-testid="media-plan-title"
           />
         </label>
 
-        <label className="block">
-          <span className="block text-xs text-muted-foreground">Master Job ID *</span>
+        <label>
+          <span className="zeus-field-label">Master Job ID *</span>
           <input
             value={masterJobId}
             onChange={e => setMasterJobId(e.target.value)}
-            className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs"
+            className="zeus-input"
+            style={{ fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)', fontSize: 12 }}
             placeholder="mj_..."
             data-testid="media-plan-master-job"
           />
         </label>
 
-        <label className="block">
-          <span className="block text-xs text-muted-foreground">Campaign ID</span>
+        <label>
+          <span className="zeus-field-label">Campaign ID</span>
           <input
             value={campaignId}
             onChange={e => setCampaignId(e.target.value)}
-            className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs"
+            className="zeus-input"
+            style={{ fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)', fontSize: 12 }}
             placeholder="(optional)"
           />
         </label>
 
-        <label className="block">
-          <span className="block text-xs text-muted-foreground">Subsidiary *</span>
+        <label>
+          <span className="zeus-field-label">Subsidiary *</span>
           <select
             value={subsidiaryOrgId}
             onChange={e => setSubsidiaryOrgId(e.target.value)}
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="zeus-select"
           >
             {SUBSIDIARY_IDS.filter(id => id !== 'zeus-group').map(id => (
               <option key={id} value={id}>{id}</option>
@@ -116,58 +124,58 @@ export default function MediaPlanCreatePage() {
           </select>
         </label>
 
-        <label className="block">
-          <span className="block text-xs text-muted-foreground">Currency *</span>
+        <label>
+          <span className="zeus-field-label">Currency *</span>
           <select
             value={currency}
             onChange={e => setCurrency(e.target.value as CurrencyCode)}
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="zeus-select"
           >
             {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
 
-        <label className="col-span-2 block">
-          <span className="block text-xs text-muted-foreground">Total budget * (major units)</span>
+        <label className="full">
+          <span className="zeus-field-label">Total budget * (major units)</span>
           <input
             type="number"
             min="0"
             step="0.01"
             value={totalBudget}
             onChange={e => setTotalBudget(e.target.value)}
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="zeus-input"
             placeholder="e.g. 50000000"
             data-testid="media-plan-budget"
           />
         </label>
 
-        <label className="block">
-          <span className="block text-xs text-muted-foreground">Flight start</span>
+        <label>
+          <span className="zeus-field-label">Flight start</span>
           <input
             type="date"
             value={flightStartDate}
             onChange={e => setFlightStartDate(e.target.value)}
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="zeus-input"
           />
         </label>
 
-        <label className="block">
-          <span className="block text-xs text-muted-foreground">Flight end</span>
+        <label>
+          <span className="zeus-field-label">Flight end</span>
           <input
             type="date"
             value={flightEndDate}
             onChange={e => setFlightEndDate(e.target.value)}
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="zeus-input"
           />
         </label>
 
-        <label className="col-span-2 block">
-          <span className="block text-xs text-muted-foreground">Notes</span>
+        <label className="full">
+          <span className="zeus-field-label">Notes</span>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
             rows={3}
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="zeus-textarea"
           />
         </label>
       </div>
@@ -176,12 +184,12 @@ export default function MediaPlanCreatePage() {
         <button
           onClick={handleCreate}
           disabled={busy}
-          className="rounded bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          className="btn btn-primary"
           data-testid="media-plan-create-btn"
         >
           {busy ? 'Creating…' : 'Create plan'}
         </button>
-        <Link to="/media" className="rounded border px-3 py-1.5 text-sm hover:bg-[var(--bg-sunken)]">Cancel</Link>
+        <Link to="/media" className="btn btn-secondary">Cancel</Link>
       </div>
     </div>
   );
